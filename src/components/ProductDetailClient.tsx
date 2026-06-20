@@ -11,6 +11,8 @@ import { Product } from '@/lib/api';
 import { useCartActions } from '@/hooks/useCartActions';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuthStore } from '@/hooks/useAuth';
+import { fetchAPI, API_ENDPOINTS } from '@/lib/api';
+
 
 interface ProductDetailClientProps {
   product: Product;
@@ -23,7 +25,13 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
   const [isAdded, setIsAdded] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
   const { addToCart } = useCartActions();
+
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuthStore();
   const isWishlisted = isInWishlist(product._id);

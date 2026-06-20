@@ -1,7 +1,8 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import SafeImage from './SafeImage';
 import { LOOKBOOK_COLLECTIONS } from '@/lib/constants';
 
 export const LuxuryLookbook: React.FC = () => {
@@ -36,13 +37,18 @@ export const LuxuryLookbook: React.FC = () => {
             >
               <div className="relative h-96 w-full overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/60" />
-                <Image
+
+                <SafeImage
                   src={item.image}
                   alt={item.title}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 33vw"
+                  // Only the first card can be above-the-fold; keep rest lazy for performance.
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  priority={index === 0}
                 />
+
                 <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_left,_rgba(0,217,255,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(179,102,255,0.18),_transparent_28%)]" />
               </div>
 
@@ -57,7 +63,9 @@ export const LuxuryLookbook: React.FC = () => {
                   {item.description}
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <span className={`inline-flex items-center rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.35em] bg-gradient-to-r ${item.accent} text-black font-semibold shadow-lg shadow-cyan-500/20`}>
+                  <span
+                    className={`inline-flex items-center rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.35em] bg-gradient-to-r ${item.accent} text-black font-semibold shadow-lg shadow-cyan-500/20`}
+                  >
                     Explore
                   </span>
                   <span className="inline-flex items-center rounded-full border border-white/10 px-4 py-2 text-[10px] uppercase tracking-[0.35em] text-white/80 bg-white/5">
@@ -72,3 +80,4 @@ export const LuxuryLookbook: React.FC = () => {
     </section>
   );
 };
+

@@ -34,7 +34,12 @@ export const API_ENDPOINTS = {
   PAYMENT: `${API_BASE_URL}/payments`,
   STRIPE_INTENT: `${API_BASE_URL}/payments/stripe/intent`,
   RAZORPAY_ORDER: `${API_BASE_URL}/payments/razorpay/order`,
+
+  // Reviews
+  PRODUCT_REVIEWS: (id: string) => `${API_BASE_URL}/products/${id}/reviews`,
+  PRODUCT_RATINGS: (id: string) => `${API_BASE_URL}/products/${id}/ratings`,
 };
+
 
 export type ProductVariant = {
   sku: string;

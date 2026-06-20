@@ -10,7 +10,7 @@ export type SafeImageProps = Omit<ImageProps, 'src' | 'onError' | 'placeholder'>
   placeholder?: 'blur' | 'empty';
 };
 
-const DEFAULT_FALLBACK_SRC = '/images/vk/placeholder.txt';
+const DEFAULT_FALLBACK_SRC = '/images/vk/placeholder.png';
 
 const DEFAULT_FALLBACK_ALT = 'Image unavailable';
 
@@ -51,7 +51,9 @@ export default function SafeImage(props: SafeImageProps) {
   } = props;
 
   const safeInitialSrc = useMemo(() => {
-    return src ? String(src) : '';
+    if (src === null || src === undefined) return '';
+    const s = String(src);
+    return s.trim().length > 0 ? s : '';
   }, [src]);
 
   const [errored, setErrored] = useState(false);
@@ -74,7 +76,7 @@ export default function SafeImage(props: SafeImageProps) {
     return errored ? getDeterministicFallbackSrc(safeInitialSrc, fallbackSrc) : safeInitialSrc;
   }, [errored, fallbackSrc, safeInitialSrc, src]);
 
-  const effectiveAlt = alt || fallbackAlt;
+  const effectiveAlt = (alt && alt.trim().length > 0 ? alt : fallbackAlt) || 'Image unavailable';
 
   // Blur placeholder: show the placeholder but still render the Image tag.
   // Using a deterministic blur data keeps hydration stable.

@@ -5,12 +5,15 @@ import '../app/globals.css';
 
 
 
-import { FloatingNavbar } from '@/components/FloatingNavbar';
-import { ParticleBackground } from '@/components/ParticleBackground';
 import { Footer } from '@/components/Footer';
-import { SmoothScroll } from '@/components/SmoothScroll';
-import { CursorGlow } from '@/components/CursorGlow';
-import { PageTransition } from '@/components/PageTransition';
+import dynamic from 'next/dynamic';
+
+const FloatingNavbar = dynamic(() => import('@/components/FloatingNavbar').then(m => m.FloatingNavbar), { ssr: false });
+const ParticleBackground = dynamic(() => import('@/components/ParticleBackground').then(m => m.ParticleBackground), { ssr: false });
+const SmoothScroll = dynamic(() => import('@/components/SmoothScroll').then(m => m.SmoothScroll), { ssr: false });
+const CursorGlow = dynamic(() => import('@/components/CursorGlow').then(m => m.CursorGlow), { ssr: false });
+const PageTransition = dynamic(() => import('@/components/PageTransition').then(m => m.PageTransition), { ssr: false });
+
 
 export const metadata: Metadata = {
   title: 'RARE RAB IT | Futuristic Luxury Fashion',

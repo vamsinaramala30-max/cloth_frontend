@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import SafeImage from './SafeImage';
 
 interface FeaturedCollectionsProps {
   collections?: Array<{
@@ -67,6 +67,8 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
     setAutoplay(false);
   };
 
+  const active = collections[activeIndex];
+
   return (
     <section
       id="featured"
@@ -101,12 +103,15 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
               transition={{ duration: 0.8 }}
             >
               {/* Background Image */}
-              <Image
-                src={collections[activeIndex].image}
-                alt={collections[activeIndex].title}
+              <SafeImage
+                src={active?.image}
+                alt={active?.title ?? 'Featured collection'}
                 fill
                 className="object-cover"
-                priority
+                // Carousel LCP should be limited; only mark the first view as priority.
+                priority={activeIndex === 0}
+                loading={activeIndex === 0 ? 'eager' : 'lazy'}
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
 
               {/* Overlay */}
@@ -120,7 +125,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  {collections[activeIndex].title}
+                  {active.title}
                 </motion.h3>
 
                 <motion.p
@@ -129,7 +134,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  {collections[activeIndex].description}
+                  {active.description}
                 </motion.p>
 
                 <motion.button
@@ -167,7 +172,9 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                 <motion.button
                   key={collection.id}
                   className={`relative w-16 h-16 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                    activeIndex === index ? 'border-cyan-400' : 'border-white/20'
+                    activeIndex === index
+                      ? 'border-cyan-400'
+                      : 'border-white/20'
                   }`}
                   onClick={() => {
                     setActiveIndex(index);
@@ -175,11 +182,13 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                   }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <Image
+                  <SafeImage
                     src={collection.image}
                     alt={collection.title}
                     fill
                     className="object-cover"
+                    loading="lazy"
+                    sizes="96px"
                   />
                   {activeIndex === index && (
                     <motion.div
@@ -197,7 +206,10 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
               <motion.button
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300 group"
                 onClick={prev}
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 217, 255, 0.1)' }}
+                whileHover={{
+                  scale: 1.1,
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                }}
               >
                 <span className="text-xl">←</span>
               </motion.button>
@@ -205,7 +217,10 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
               <motion.button
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300 group"
                 onClick={next}
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 217, 255, 0.1)' }}
+                whileHover={{
+                  scale: 1.1,
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                }}
               >
                 <span className="text-xl">→</span>
               </motion.button>
@@ -219,7 +234,8 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                 key={index}
                 className="h-1 bg-white/20 rounded-full flex-1"
                 animate={{
-                  backgroundColor: activeIndex === index ? '#00d9ff' : 'rgba(255, 255, 255, 0.2)',
+                  backgroundColor:
+                    activeIndex === index ? '#00d9ff' : 'rgba(255, 255, 255, 0.2)',
                 }}
                 transition={{ duration: 0.3 }}
               />
@@ -230,3 +246,4 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
     </section>
   );
 };
+

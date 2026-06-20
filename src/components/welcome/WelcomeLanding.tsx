@@ -1,307 +1,484 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { AnimatePresence, motion } from 'framer-motion';
+import { gsap } from 'gsap';
 
-import { Footer } from '@/components/Footer';
+import Logo from '@/components/Logo';
+
 import { GlassCard } from '@/components/GlassCard';
-import { HeroSection } from '@/components/HeroSection';
-import { FloatingNavbar } from '@/components/FloatingNavbar';
 
-const STAT_ITEMS = [
-  { label: 'Templates', value: '120+' },
-  { label: 'Production Speed', value: '24h' },
-  { label: 'Customer Care', value: '24/7' },
-  { label: 'Quality Score', value: 'A+' },
-];
+const LuxuryVideo = dynamic(() => import('./_parts/LuxuryVideo'), { ssr: false });
+const CityLights = dynamic(() => import('./_parts/CityLights'), { ssr: false });
+const AuroraOverlays = dynamic(() => import('./_parts/AuroraOverlays').then((m) => m.default), { ssr: false });
+const LuxuryTemplatesRail = dynamic(() => import('./_parts/LuxuryTemplatesRail'), { ssr: false });
 
-const PRICING = [
-  {
-    name: 'Starter',
-    price: '$19',
-    blurb: 'For personal designs & basic customization.',
-    perks: ['Template downloads', '1 marketplace sync', 'Community support'],
-  },
-  {
-    name: 'Studio',
-    price: '$49',
-    blurb: 'For frequent creators & teams.',
-    perks: ['Live previews', 'Priority rendering', 'Export presets', 'Private collections'],
-  },
-  {
-    name: 'Maison',
-    price: '$99',
-    blurb: 'For agencies & premium workflows.',
-    perks: ['Advanced analytics', 'Team templates', 'Best-in-class support', 'Early feature access'],
-  },
-];
 
-const TESTIMONIALS = [
-  {
-    name: 'Alya K.',
-    role: 'Creative Director',
-    quote:
-      'The glassmorphism experience feels premium, and the template previews are instant—exactly the kind of speed we need.',
-  },
-  {
-    name: 'Noah R.',
-    role: 'E-commerce Founder',
-    quote:
-      'Clean UX, smooth transitions, and the layout is stunning. Our conversion lift started immediately.',
-  },
-  {
-    name: 'Mina S.',
-    role: 'Brand Strategist',
-    quote:
-      'The experience is cinematic—hero, stats, testimonials, and pricing all flow naturally without distracting from the product.',
-  },
-];
+function useSafePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
 
-const TEMPLATE_SHOWCASE = [
-  { title: 'Nebula Noir', desc: 'Dark editorial with cinematic typography.' },
-  { title: 'Aurum Halo', desc: 'Warm luxury gradients & premium spacing.' },
-  { title: 'Vanta Silk', desc: 'Minimal, fast, and intensely elegant.' },
-  { title: 'Cosmic Atelier', desc: 'Bold hero blocks and bold feature grids.' },
-];
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!mq) return;
+    const apply = () => setReduced(!!mq.matches);
+    apply();
+
+    // Safari compatibility
+    const anyMq = mq as any;
+    if (anyMq.addEventListener) {
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
+
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, []);
+
+  return reduced;
+}
 
 export function WelcomeLanding() {
+  const prefersReducedMotion = useSafePrefersReducedMotion();
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const logoWrapRef = useRef<HTMLDivElement | null>(null);
+  const logoTextRef = useRef<HTMLDivElement | null>(null);
+
+  const [soundOn, setSoundOn] = useState(false);
+  const [soundLoaded, setSoundLoaded] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const [phase, setPhase] = useState<'intro' | 'exiting' | 'done'>('intro');
+
+  const AUTO_REDIRECT_MS = 5000;
+
+  const FEATURES = useMemo(
+    () => [
+      'AI Fashion Studio',
+      'Luxury Collections',
+      'Personalized Recommendations',
+      'Digital Fashion Experience',
+    ],
+    []
+  );
+
+  const CITY_VIDEO_FALLBACK_IMAGE = useMemo(() => {
+    // If you add/replace assets later, keep these defaults.
+    // Using existing project assets would be ideal but not required.
+    return '/images/background/hero-background.webp';
+  }, []);
+
+  const onToggleSound = async () => {
+    setHasInteracted(true);
+    setSoundOn((v) => !v);
+  };
+
+  // Lazy load sound
+  useEffect(() => {
+    if (!hasInteracted) return;
+    if (!soundOn) return;
+
+    // Create on-demand
+    if (!audioRef.current) {
+      // Provide a local audio asset if available; otherwise it will fail gracefully.
+      // Replace /sounds/rare-rab-it.wav with a real file if you add one.
+      audioRef.current = new Audio('/sounds/rare-rab-it.mp3');
+      audioRef.current.preload = 'none';
+
+      audioRef.current.addEventListener('canplaythrough', () => setSoundLoaded(true));
+      audioRef.current.addEventListener('error', () => setSoundLoaded(false));
+
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.35;
+    }
+
+    // Attempt play (must be after interaction)
+    const tryPlay = async () => {
+      try {
+        await audioRef.current?.play();
+      } catch {
+        // Ignore autoplay policy errors.
+      }
+    };
+
+    tryPlay();
+  }, [hasInteracted, soundOn]);
+
+  // Stop sound when toggled off
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (soundOn) return;
+    try {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    } catch {
+      // ignore
+    }
+  }, [soundOn]);
+
+  // Logo animation + burst
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      gsap.set(logoWrapRef.current, { opacity: 1, y: 0 });
+      gsap.set(logoTextRef.current, { opacity: 1, filter: 'none' });
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      tl.set(logoWrapRef.current, { opacity: 0, y: 24, filter: 'blur(8px)' });
+      tl.fromTo(
+        logoWrapRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.6, y: 0, filter: 'blur(0px)' }
+      );
+
+      // Golden neon glow pulse
+      tl.fromTo(
+        logoTextRef.current,
+        { opacity: 0, color: 'rgba(255, 215, 90, 0.2)', textShadow: 'none' },
+        {
+          opacity: 1,
+          color: 'rgba(255, 215, 90, 1)',
+          duration: 0.7,
+          textShadow: '0 0 24px rgba(255, 196, 74, 0.65), 0 0 60px rgba(255, 196, 74, 0.35)',
+        }
+      );
+
+      // Luxury reveal sequence
+      tl.to(logoWrapRef.current, { scale: 1.02, duration: 0.35 });
+      tl.to(logoWrapRef.current, { scale: 1, duration: 0.25 });
+
+      // Particle burst
+      const el = rootRef.current;
+      if (el) {
+        const burst = document.createElement('div');
+        burst.className = 'welcome-burst';
+        el.appendChild(burst);
+
+        const particles = Array.from({ length: 18 }).map(() => {
+          const p = document.createElement('span');
+          p.className = 'welcome-burst-dot';
+          burst.appendChild(p);
+          return p;
+        });
+
+        particles.forEach((p, i) => {
+          const ang = (Math.PI * 2 * i) / particles.length;
+          const dist = 60 + Math.random() * 40;
+          const x = Math.cos(ang) * dist;
+          const y = Math.sin(ang) * dist;
+          const delay = 0.06 + Math.random() * 0.08;
+
+          gsap.set(p, { opacity: 0 });
+          gsap.to(p, {
+            opacity: 1,
+            x,
+            y,
+            duration: 0.65,
+            delay,
+            ease: 'power2.out',
+            onComplete: () => {
+              gsap.to(p, {
+                opacity: 0,
+                duration: 0.2,
+              });
+            },
+          });
+        });
+
+        tl.add(() => {
+          gsap.set(burst, { opacity: 1 });
+        }, '+=0.05');
+
+        tl.to(burst, {
+          opacity: 0,
+          duration: 0.5,
+          delay: 0.2,
+          onComplete: () => {
+            burst.remove();
+          },
+        });
+      }
+    });
+
+    return () => ctx.revert();
+  }, [prefersReducedMotion]);
+
+  // Auto redirect with cinematic exit
+  const doExitAndGoHome = async () => {
+    if (phase !== 'intro') return;
+    setPhase('exiting');
+
+    const el = rootRef.current;
+    if (!el) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      window.location.href = '/';
+      return;
+    }
+
+    // Cinematic shutter effect
+    const shutter = document.createElement('div');
+    shutter.className = 'welcome-shutter';
+    el.appendChild(shutter);
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
+    tl.set(shutter, { opacity: 1, scaleY: 0.12, transformOrigin: 'center center' });
+    tl.to(shutter, { scaleY: 1, duration: 0.7 });
+    tl.to(
+      el,
+      {
+        opacity: 0,
+        duration: 0.35,
+      },
+      '-=0.25'
+    );
+
+    tl.add(() => {
+      window.location.href = '/';
+    });
+  };
+
+  useEffect(() => {
+    if (phase !== 'intro') return;
+    const t = window.setTimeout(() => {
+      doExitAndGoHome();
+    }, AUTO_REDIRECT_MS);
+
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  const onSkip = () => doExitAndGoHome();
+
+  const onEnterVault = () => doExitAndGoHome();
+  const onExploreCollections = () => (window.location.href = '/templates');
+
   return (
-    <div className="min-h-screen">
-      {/* Note: RootLayout already includes navbar/footer/cursor/particles.
-          We keep this component purely additive styling and content. */}
+    <div ref={rootRef} className="relative min-h-screen overflow-hidden">
+      {/* Animated background layers */}
+      <CityLights />
+      <AuroraOverlays />
 
-      <div className="relative">
-        {/* Hero */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute top-32 right-10 h-[360px] w-[360px] rounded-full bg-purple-500/10 blur-3xl" />
+      {/* Glass overlays & gradients */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,217,255,0.14),transparent_55%),radial-gradient(circle_at_20%_30%,rgba(179,102,255,0.12),transparent_55%),linear-gradient(to_bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.65))]" />
+      <div className="pointer-events-none absolute inset-0 backdrop-blur-[2px]" style={{ opacity: 0.35 }} />
 
-        <div className="mx-auto max-w-6xl px-4 pt-24 pb-10">
-          {/* Inline Glass Navbar-like bar */}
-          <div className="mb-10">
-            {/* Keeping existing FloatingNavbar untouched; this is a minimal CTA strip only */}
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl px-4 py-3 shadow-[0_0_50px_rgba(0,255,255,0.08)]">
-              <div className="text-xs uppercase tracking-[0.25em] text-zinc-300">
-             RARE RAB IT   Futuristic Luxury • Template Studio
-              </div>
-              <a
-                href="/login"
-                className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-400 px-4 py-2 text-xs font-bold uppercase tracking-widest text-black shadow-lg shadow-cyan-400/20 hover:brightness-105 transition"
-              >
-                Login
-              </a>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-zinc-300">
-                <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_20px_rgba(0,255,255,0.6)]" />
-                Premium dark theme • glass UI • fast previews
-              </div>
-
-              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-light leading-[1.05] tracking-tight text-white">
-                Design like a <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300">Maison</span>.
-              </h1>
-
-              <p className="mt-5 text-zinc-400 max-w-xl">
-                A modern template gallery and cinematic landing experience—built for speed, clarity, and conversion.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a
-                  href="/templates"
-                  className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
-                >
-                  Explore Templates
-                </a>
-                <a
-                  href="/welcome"
-                  className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-400 px-5 py-3 text-sm font-bold text-black hover:brightness-105 transition"
-                >
-                  View Premium Flow
-                </a>
-              </div>
-
-              <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {STAT_ITEMS.map((s) => (
-                  <div key={s.label} className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-4">
-                    <div className="text-2xl text-white font-light">{s.value}</div>
-                    <div className="text-[0.65rem] uppercase tracking-[0.2em] text-zinc-400 mt-1">{s.label}</div>
-                  </div>
-                ))}
+      {/* Main hero */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-8 pt-24 md:pt-32 pb-16">
+        <div className="flex items-center justify-between gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center gap-3"
+          >
+            <div ref={logoWrapRef} className="welcome-logo-wrap">
+              <div className="welcome-logo-glow" />
+              <div ref={logoTextRef} className="welcome-logo-text">
+                <Logo className="-ml-1" showText={true} />
               </div>
             </div>
+          </motion.div>
 
-            <div className="relative">
-              <GlassCard className="p-6 relative overflow-hidden">
-                <div className="absolute -top-24 -left-24 h-56 w-56 rounded-full bg-cyan-500/20 blur-2xl" />
-                <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-purple-500/20 blur-2xl" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onToggleSound}
+              className="relative rounded-xl border border-white/10 bg-black/35 backdrop-blur-xl px-4 py-2 text-xs font-semibold tracking-widest uppercase text-white/90 hover:bg-white/10 transition"
+              aria-label={soundOn ? 'Sound on' : 'Sound off'}
+            >
+              <span className="inline-flex items-center gap-2">
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${soundOn ? 'bg-cyan-300 shadow-[0_0_20px_rgba(0,217,255,0.7)]' : 'bg-white/30'}`}
+                />
+                Sound
+              </span>
+            </button>
 
-                <div className="relative">
-                  <h2 className="text-lg text-white font-semibold">Template Preview</h2>
-                  <p className="text-zinc-400 text-sm mt-2">
-                    Live previews, responsive cards, and smooth transitions.
-                  </p>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {TEMPLATE_SHOWCASE.slice(0, 4).map((t) => (
-                      <div key={t.title} className="rounded-xl border border-white/10 bg-black/30 p-3">
-                        <div className="text-white text-sm font-medium">{t.title}</div>
-                        <div className="text-zinc-400 text-xs mt-1 line-clamp-2">{t.desc}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6">
-                    <a
-                      href="/templates"
-                      className="w-full inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
-                    >
-                      Open Templates Gallery
-                    </a>
-                  </div>
-                </div>
-              </GlassCard>
-            </div>
+            <button
+              onClick={onSkip}
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold tracking-widest uppercase text-white/90 hover:bg-white/10 transition"
+            >
+              Skip Intro
+            </button>
           </div>
         </div>
 
-        {/* Features */}
-        <section className="mx-auto max-w-6xl px-4 pb-12">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">Features</div>
-              <h3 className="mt-3 text-2xl sm:text-3xl text-white font-light">Everything you need to launch.</h3>
-            </div>
-          </div>
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.1 }}
+            >
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-zinc-300 backdrop-blur-xl">
+                <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_20px_rgba(0,255,255,0.6)]" />
+                Luxury Fashion • Cyberpunk Premium
+              </div>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                title: 'Glass UI Components',
-                desc: 'Premium typography, glass surfaces, and cinematic spacing.',
-              },
-              {
-                title: 'Live Template Previews',
-                desc: 'Search, filter, preview, and select instantly on any device.',
-              },
-              {
-                title: 'Order Tracking Ready',
-                desc: 'Status pipeline from Ordered to Refunded, built for clarity.',
-              },
-            ].map((f) => (
-              <GlassCard key={f.title} className="p-6">
-                <div className="text-white text-lg font-semibold">{f.title}</div>
-                <div className="text-zinc-400 text-sm mt-2">{f.desc}</div>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
+              <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-light leading-[1.05] tracking-tight text-white">
+                WELCOME TO THE FUTURE OF FASHION
+              </h1>
 
-        {/* Pricing */}
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">Pricing</div>
-          <h3 className="mt-3 text-2xl sm:text-3xl text-white font-light">Simple plans. Premium outcomes.</h3>
-
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {PRICING.map((p, idx) => (
-              <GlassCard
-                key={p.name}
-                className={`p-6 ${idx === 1 ? 'border-cyan-400/20 shadow-[0_0_80px_rgba(0,255,255,0.12)]' : ''}`}
-              >
-                <div className="text-white text-xl font-semibold">{p.name}</div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <div className="text-4xl font-light text-cyan-200">{p.price}</div>
-                </div>
-                <p className="text-zinc-400 text-sm mt-3">{p.blurb}</p>
-                <ul className="mt-5 space-y-2">
-                  {p.perks.map((perk) => (
-                    <li key={perk} className="text-zinc-300 text-sm">
-                      • {perk}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6">
-                  <a
-                    href="/templates"
-                    className={`w-full inline-flex justify-center rounded-xl px-4 py-3 text-sm font-bold transition ${
-                      idx === 1
-                        ? 'bg-gradient-to-r from-cyan-400 to-purple-400 text-black hover:brightness-105'
-                        : 'bg-white/5 border border-white/15 text-white hover:bg-white/10'
-                    }`}
-                  >
-                    Choose {p.name}
-                  </a>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
-
-        {/* Testimonials */}
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">Testimonials</div>
-          <h3 className="mt-3 text-2xl sm:text-3xl text-white font-light">Creators love the experience.</h3>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((t) => (
-              <GlassCard key={t.name} className="p-6">
-                <div className="text-zinc-300 text-sm">“{t.quote}”</div>
-                <div className="mt-4">
-                  <div className="text-white font-semibold text-sm">{t.name}</div>
-                  <div className="text-zinc-400 text-xs mt-1">{t.role}</div>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        </section>
-
-        {/* About */}
-        <section className="mx-auto max-w-6xl px-4 pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">About</div>
-              <h3 className="mt-3 text-2xl sm:text-3xl text-white font-light">A futuristic studio for modern luxury.</h3>
-              <p className="mt-4 text-zinc-400">
-                We believe UI should feel cinematic and navigation should feel effortless. This experience is designed to
-                keep you focused on what matters: choosing the right template and shipping with confidence.
+              <p className="mt-5 text-zinc-300 max-w-xl text-base sm:text-lg">
+                Where Luxury Meets Technology
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  href="/templates"
-                  className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-400 px-5 py-3 text-sm font-bold text-black hover:brightness-105 transition"
-                >
-                  Get Started
-                </a>
-                <a
-                  href="/login"
-                  className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
-                >
-                  Sign In
-                </a>
-              </div>
-            </div>
 
-            <div className="relative">
-              <div className="rounded-3xl border border-white/10 bg-black/25 backdrop-blur-xl p-6 overflow-hidden">
-                <div className="text-white font-semibold">Template Showcase</div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {TEMPLATE_SHOWCASE.map((t) => (
-                    <div key={t.title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="text-white text-sm font-medium">{t.title}</div>
-                      <div className="text-zinc-400 text-xs mt-1 line-clamp-2">{t.desc}</div>
-                    </div>
-                  ))}
+              <div className="mt-9 flex flex-wrap gap-3">
+                <button
+                  onClick={onEnterVault}
+                  className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-400 px-6 py-3 text-sm font-bold text-black shadow-[0_0_30px_rgba(0,217,255,0.12)] hover:brightness-105 transition"
+                >
+                  Enter The Vault
+                </button>
+                <button
+                  onClick={onExploreCollections}
+                  className="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
+                >
+                  Explore Collections
+                </button>
+              </div>
+
+              <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {FEATURES.map((f) => (
+                  <div key={f} className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-4">
+                    <div className="text-white font-semibold text-sm">{f}</div>
+                    <div className="mt-2 h-[1px] w-full bg-gradient-to-r from-cyan-300/30 via-purple-300/20 to-transparent" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex items-center gap-3 text-xs text-zinc-400">
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-block h-1 w-1 rounded-full bg-cyan-300/80" />
+                  Auto-redirecting in <span className="text-zinc-200">5s</span>
+                </span>
+                <span className="hidden sm:inline-block">•</span>
+                <span className="hidden sm:inline-flex items-center gap-2">
+                  <span className="inline-block h-1 w-1 rounded-full bg-purple-300/70" />
+                  GPU-first transforms
+                </span>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="relative">
+            {/* Lazy video */}
+            <div className="relative rounded-[1.6rem] border border-white/10 bg-black/20 backdrop-blur-xl overflow-hidden shadow-[0_0_120px_rgba(0,217,255,0.08)]">
+              <LuxuryVideo
+                poster={CITY_VIDEO_FALLBACK_IMAGE}
+                className="h-[420px] w-full"
+                reduced={prefersReducedMotion}
+              />
+
+
+              {/* Glass caption overlay */}
+              <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/70 via-black/25 to-transparent">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-white text-sm font-semibold">RARE RAB IT — Luxury Look</div>
+                  <div className="text-zinc-400 text-xs">Cinematic intro stream</div>
                 </div>
               </div>
-              <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-cyan-500/20 blur-2xl" />
-              <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-purple-500/20 blur-2xl" />
+
+              {/* Glassmorphism overlay */}
+              <div className="pointer-events-none absolute inset-0 border border-white/5 rounded-[1.6rem]" />
             </div>
+
+            {/* Parallax hint */}
+            <div className="pointer-events-none absolute -top-6 -right-8 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-10 -left-8 h-32 w-32 rounded-full bg-purple-400/10 blur-2xl" />
           </div>
-        </section>
+        </div>
+
+        {/* Animated template rails */}
+        <div className="mt-16">
+          <LuxuryTemplatesRail />
+        </div>
+
+        {/* Footer hint (no duplication) */}
       </div>
 
-      {/* Footer is already in RootLayout; leaving no extra markup to avoid duplication. */}
-      <div className="sr-only">Welcome landing page</div>
+      {/* Exit animations overlay */}
+      <AnimatePresence>
+        {phase === 'exiting' ? (
+          <motion.div
+            key="exit"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="welcome-exit-overlay"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <style jsx global>{`
+        .welcome-logo-wrap {
+          position: relative;
+          transform: translateZ(0);
+        }
+        .welcome-logo-glow {
+          position: absolute;
+          inset: -10px -18px;
+          background: radial-gradient(circle at 50% 50%, rgba(255, 196, 74, 0.35), rgba(255, 196, 74, 0) 60%);
+          filter: blur(10px);
+          opacity: 0.9;
+          pointer-events: none;
+          z-index: -1;
+        }
+        .welcome-logo-text {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .welcome-burst {
+          position: absolute;
+          left: 50%;
+          top: 165px;
+          transform: translate(-50%, -50%);
+          width: 1px;
+          height: 1px;
+          pointer-events: none;
+          z-index: 60;
+        }
+        .welcome-burst-dot {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 4px;
+          height: 4px;
+          border-radius: 9999px;
+          background: rgba(255, 215, 90, 0.95);
+          box-shadow: 0 0 14px rgba(255, 215, 90, 0.6), 0 0 35px rgba(255, 215, 90, 0.25);
+        }
+        .welcome-shutter {
+          position: absolute;
+          inset: -10% -10%;
+          background: radial-gradient(circle at 50% 30%, rgba(255, 196, 74, 0.18), rgba(0,0,0,0) 55%),
+            linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.9));
+          transform: scaleY(0.12);
+          transform-origin: center center;
+          pointer-events: none;
+          z-index: 80;
+          opacity: 0;
+        }
+        .welcome-exit-overlay {
+          position: fixed;
+          inset: 0;
+          background: radial-gradient(circle at 50% 30%, rgba(255, 196, 74, 0.16), rgba(0,0,0,0) 55%),
+            linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.9));
+          z-index: 100;
+          pointer-events: none;
+          backdrop-filter: blur(2px);
+        }
+      `}</style>
     </div>
   );
 }

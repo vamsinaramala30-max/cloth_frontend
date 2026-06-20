@@ -118,7 +118,7 @@ export const HeroSection: React.FC = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(0,217,255,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(179,102,255,0.15),_transparent_30%)]" />
             <div className="absolute inset-0">
               <SafeImage
-                src="image/backimg.jpeg"
+                src="/images/backimg.jpeg"
                 alt="Editorial preview"
                 fill
                 className="object-cover mix-blend-screen opacity-80"

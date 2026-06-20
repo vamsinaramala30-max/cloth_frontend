@@ -11,8 +11,13 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 // misconfigured environments, or during local development.
 // Instead, we validate and fail gracefully when a Supabase call is actually made.
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Support both NEXT_PUBLIC_* (Next.js) and VITE_* (Vite) environment variable naming.
+// Your repo sometimes references VITE_* variables in documentation/requirements.
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
 
 export const SUPABASE_STORAGE_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'profile-images';
@@ -25,10 +30,11 @@ export function getSupabaseClient(): SupabaseClient {
   if (!hasSupabaseEnv || !supabaseUrl || !supabaseAnonKey) {
     // Throw with a meaningful message, but only when code actually tries to use Supabase.
     // This prevents Vercel from failing just by importing the module.
-    throw new Error(
-      'Supabase is not configured. Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
-        'Add them to frontend/.env.local (or Vercel env vars) and redeploy.'
-    );
+      throw new Error(
+        'Supabase is not configured. Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (or VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). ' +
+          'Add them to frontend/.env.local (or Vercel env vars) and redeploy.'
+      );
+
   }
 
   if (!_supabase) {
@@ -63,9 +69,10 @@ export const supabase: SupabaseClient = (() => {
       {
         get() {
           throw new Error(
-            'Supabase is not configured. Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
+            'Supabase is not configured. Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (or VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). ' +
               'Add them to frontend/.env.local (or Vercel env vars) and redeploy.'
           );
+
         },
       }
     ) as unknown as SupabaseClient;
