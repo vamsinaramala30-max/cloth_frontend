@@ -1,5 +1,6 @@
 // API Configuration
 import config from '@/config/env';
+import { CartItem, OrderHistoryItem } from '@/types';
 
 const API_BASE_URL = config.apiUrl;
 
@@ -85,26 +86,16 @@ export type FilterResponse = {
 
 export type User = {
   _id: string;
+  id?: string;
   name: string;
   email: string;
   role: 'customer' | 'admin' | 'superadmin';
   isVerified: boolean;
   wishlist: string[];
   addresses: Array<{ label: string; street: string; city: string; country: string }>;
+  phone?: string;
 };
 
-export type CartItem = {
-  _id: string;
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  size: string;
-  color: string;
-  image: string;
-};
-
-// OTP Auth
 export type OtpSendPayload = {
   email?: string;
   phone?: string;
@@ -184,6 +175,11 @@ export async function fetchFilters() {
   return response;
 }
 
+export type LoginResponseData = {
+  user: User;
+  token: string;
+};
+
 // Auth APIs
 export async function register(email: string, password: string, name: string) {
   return fetchAPI(API_ENDPOINTS.REGISTER, {
@@ -193,7 +189,7 @@ export async function register(email: string, password: string, name: string) {
 }
 
 export async function login(email: string, password: string) {
-  return fetchAPI(API_ENDPOINTS.LOGIN, {
+  return fetchAPI<LoginResponseData>(API_ENDPOINTS.LOGIN, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -207,6 +203,12 @@ export async function getMe() {
   return fetchAPI<{ user: User }>(API_ENDPOINTS.ME);
 }
 
+export type CartResponse = {
+  data: {
+    items: CartItem[];
+  };
+};
+
 // Cart APIs
 export async function addToCart(productId: string, variantSku: string, quantity: number, size: string, color: string) {
   return fetchAPI(API_ENDPOINTS.CART, {
@@ -216,7 +218,7 @@ export async function addToCart(productId: string, variantSku: string, quantity:
 }
 
 export async function getCart() {
-  return fetchAPI(API_ENDPOINTS.CART);
+  return fetchAPI<CartResponse>(API_ENDPOINTS.CART);
 }
 
 export async function updateCartItem(itemId: string, quantity: number) {
@@ -228,6 +230,16 @@ export async function updateCartItem(itemId: string, quantity: number) {
 
 export async function clearCart() {
   return fetchAPI(API_ENDPOINTS.CART, { method: 'DELETE' });
+}
+
+// Orders
+export type OrderHistoryResponse = {
+  data?: { data?: OrderHistoryItem[] } | OrderHistoryItem[];
+};
+
+// Orders APIs
+export async function fetchOrderHistory() {
+  return fetchAPI<OrderHistoryResponse>(API_ENDPOINTS.ORDERS + '/history', { method: 'GET' });
 }
 
 // Wishlist APIs
@@ -264,3 +276,9 @@ export async function verifyOtp(payload: OtpVerifyPayload) {
   });
 }
 
+export async function updateProfile(payload: { name: string; phone?: string }) {
+  return fetchAPI<{ data: User }>(API_ENDPOINTS.ME, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}

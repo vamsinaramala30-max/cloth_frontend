@@ -1,202 +1,110 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { useAuthStore } from '@/hooks/useAuth';
+import { DashboardLayout } from '@/components/account/DashboardLayout';
+import { User, ShoppingBag, Heart, MapPin } from 'lucide-react';
 
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { supabase } from '@/lib/supabaseClient';
-import type { Profile } from '@/lib/supabaseTypes';
-import ProfileImageManager from '@/components/account/ProfileImageManager';
-
-function Stat({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
   return (
-    <div className="p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
-      <div className="text-xs text-zinc-400">{label}</div>
-      <div className="mt-2 text-white font-semibold tracking-wide">{value}</div>
+    <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm hover:border-cyan-400/20 hover:bg-white/[0.05] transition-all duration-300 group">
+      <div className="flex items-start justify-between mb-3">
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">{label}</span>
+        <Icon className="h-4 w-4 text-zinc-600 group-hover:text-cyan-400/60 transition-colors" />
+      </div>
+      <div className="text-white text-xl font-light tracking-wider">{value}</div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] uppercase tracking-widest text-zinc-500">{label}</span>
+      <span className="text-white text-sm font-light">{value || '—'}</span>
     </div>
   );
 }
 
 export default function AccountDashboardClient() {
-  const { user, isLoading } = useSupabaseAuth();
+  const { user, isLoading } = useAuthStore();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [busy, setBusy] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const userId = user?.id;
-
-  useEffect(() => {
-    if (!userId) return;
-
-    let mounted = true;
-    (async () => {
-      try {
-        setBusy(true);
-        setError(null);
-
-        const { data, error: dbError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-        if (dbError) throw dbError;
-
-        if (mounted) setProfile(data as Profile);
-      } catch (e: any) {
-        // If the profiles row doesn't exist yet, still allow UI skeleton.
-        if (mounted) setError(e?.message || 'Failed to load profile');
-      } finally {
-        if (mounted) setBusy(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [userId]);
-
-  const headerStats = useMemo(() => {
-    return [
-      {
-        label: 'Loyalty Tier',
-        value: profile?.loyalty_tier ? String(profile.loyalty_tier) : '—',
-      },
-      {
-        label: 'Reward Points',
-        value: profile?.reward_points != null ? String(profile.reward_points) : '—',
-      },
-      {
-        label: 'Member Since',
-        value: profile?.member_since ? String(profile.member_since) : '—',
-      },
-      {
-        label: 'Total Orders',
-        value: profile?.total_orders != null ? String(profile.total_orders) : '—',
-      },
-      {
-        label: 'Total Spend',
-        value: profile?.total_spend != null ? `$${Number(profile.total_spend).toLocaleString()}` : '—',
-      },
-    ];
-  }, [profile]);
+  const stats = useMemo(() => [
+    { label: 'Account Role', value: user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '—', icon: User },
+    { label: 'Saved Items', value: user?.wishlist ? String(user.wishlist.length) : '0', icon: Heart },
+    { label: 'Saved Addresses', value: user?.addresses ? String(user.addresses.length) : '0', icon: MapPin },
+    { label: 'Orders', value: '—', icon: ShoppingBag },
+  ], [user]);
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen pt-32 md:pt-40 pb-20 px-4 md:px-8 z-20">
-        <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-zinc-400">
-            Loading your profile…
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!userId) {
-    return (
-      <div className="relative min-h-screen pt-32 md:pt-40 pb-20 px-4 md:px-8 z-20">
-        <div className="max-w-7xl mx-auto">
-          <motion.h1
-            className="text-4xl md:text-6xl font-light tracking-[0.1em] text-white uppercase mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            Your Account
-          </motion.h1>
-          <div className="text-zinc-400">Please sign in to access your luxury dashboard.</div>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen pt-32 md:pt-40 pb-20 px-4 md:px-8 z-20">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="p-6 md:p-10 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden relative"
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="absolute inset-0 pointer-events-none opacity-30">
-            <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tr from-cyan-400/40 to-purple-400/30 blur-3xl" />
-            <div className="absolute -bottom-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tr from-purple-500/25 to-cyan-400/20 blur-3xl" />
+    <DashboardLayout title="Profile" subtitle="Manage your account profile and statistics">
+      <div className="space-y-10">
+
+        {/* Avatar + Personal Details */}
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Avatar */}
+          <div className="shrink-0 flex flex-col items-center gap-3">
+            <div className="relative w-24 h-24 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-purple-400/10" />
+              <User className="h-10 w-10 text-zinc-400 relative z-10" />
+            </div>
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Avatar</span>
           </div>
 
-          <div className="relative">
-            <div className="flex flex-col lg:flex-row gap-8 lg:items-start lg:justify-between">
-              <div>
-                <motion.h1
-                  className="text-4xl md:text-6xl font-light tracking-[0.1em] text-white uppercase"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  Profile
-                </motion.h1>
-                <div className="mt-3 text-zinc-300/90 text-sm md:text-base tracking-wide">
-                  Rare Rab It — luxury customer dashboard
-                </div>
-
-                {error ? (
-                  <div className="mt-4 text-sm text-red-200 bg-red-500/10 border border-red-400/20 rounded-lg px-4 py-2">
-                    {error}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="w-full lg:max-w-md">
-                <ProfileImageManager
-                  userId={userId}
-                  avatarUrl={profile?.avatar_url ?? null}
-                  onAvatarUpdated={(url) => {
-                    setProfile((p) => (p ? { ...p, avatar_url: url } : p));
-                  }}
-                />
+          {/* Details */}
+          <div className="flex-1 space-y-5">
+            <div>
+              <h3 className="text-sm font-light text-white uppercase tracking-widest mb-4 pb-2 border-b border-white/10">
+                Personal Details
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <InfoRow label="Full Name" value={user?.name} />
+                <InfoRow label="Email Address" value={user?.email} />
+                <InfoRow label="Account Role" value={user?.role} />
+                <InfoRow label="Verified" value={user?.isVerified ? 'Yes' : 'No'} />
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {headerStats.map((s) => (
-                <Stat key={s.label} label={s.label} value={busy ? '—' : s.value} />
+        {/* Stats Grid */}
+        <div className="border-t border-white/10 pt-8">
+          <h3 className="text-sm font-light text-white uppercase tracking-widest mb-5">
+            Account Overview
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((s) => (
+              <StatCard key={s.label} label={s.label} value={s.value} icon={s.icon} />
+            ))}
+          </div>
+        </div>
+
+        {/* Addresses */}
+        {user?.addresses && user.addresses.length > 0 && (
+          <div className="border-t border-white/10 pt-8">
+            <h3 className="text-sm font-light text-white uppercase tracking-widest mb-5">
+              Saved Addresses
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {user.addresses.map((addr, i) => (
+                <div key={i} className="p-4 rounded-xl border border-white/10 bg-white/[0.02] space-y-1">
+                  <span className="text-[10px] uppercase tracking-widest text-cyan-400 font-semibold">{addr.label}</span>
+                  <p className="text-sm text-zinc-300 font-light">{addr.street}</p>
+                  <p className="text-xs text-zinc-500">{addr.city}, {addr.country}</p>
+                </div>
               ))}
             </div>
-
-            <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
-              <div className="text-xs text-zinc-400">Navigation</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {[
-                  'Orders',
-                  'Wishlist',
-                  'Rewards',
-                  'Coupons',
-                  'Notifications',
-                  'Addresses',
-                  'Settings',
-                  'Payment Methods',
-                ].map((t) => (
-                  <button
-                    key={t}
-                    className="px-3 py-2 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 transition-all text-xs md:text-sm text-white"
-                    onClick={() => {
-                      console.info('Navigate:', t);
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 text-xs text-zinc-500">
-                Next step: implement each module connected to Supabase (realtime where applicable).
-              </div>
-            </div>
           </div>
-        </motion.div>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
-

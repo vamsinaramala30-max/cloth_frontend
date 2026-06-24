@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { User } from '@/lib/api';
 
 export interface CartItem {
   id: string;
@@ -21,8 +22,8 @@ export interface AppStore {
   cartTotal: () => number;
 
   // User
-  user: { id: string; email: string; name: string } | null;
-  setUser: (user: any) => void;
+  user: User | null;
+  setUser: (user: User) => void;
   clearUser: () => void;
   isAuthenticated: () => boolean;
 

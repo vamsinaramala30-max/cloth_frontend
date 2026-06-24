@@ -27,9 +27,12 @@ export default function AuthOtp({ onSuccess }: { onSuccess?: () => void }) {
         setMessage('OTP sent to your phone');
       }
       setPhase('verify');
-    } catch (err) {
-      const e = err as any;
-      setMessage(e?.response?.data?.message || 'Failed to send OTP');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || 'Failed to send OTP');
+      } else {
+        setMessage('Failed to send OTP');
+      }
     } finally {
       setLoading(false);
     }
@@ -48,9 +51,12 @@ export default function AuthOtp({ onSuccess }: { onSuccess?: () => void }) {
         setMessage('Verified — signing in');
       }
       onSuccess?.();
-    } catch (err) {
-      const e = err as any;
-      setMessage(e?.response?.data?.message || 'Invalid OTP');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || 'Invalid OTP');
+      } else {
+        setMessage('Invalid OTP');
+      }
     } finally {
       setLoading(false);
     }

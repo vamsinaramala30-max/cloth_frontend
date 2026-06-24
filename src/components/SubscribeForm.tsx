@@ -13,12 +13,15 @@ export default function SubscribeForm({ onDone }: { onDone?: () => void }) {
     e?.preventDefault();
     try {
       setLoading(true);
-      const res = await axios.post('/api/subscriber/subscribe', { email, phone, source: 'site' });
+      await axios.post('/api/subscriber/subscribe', { email, phone, source: 'site' });
       setMessage('Thanks — you are subscribed.');
       onDone?.();
-    } catch (err) {
-      const e = err as any;
-      setMessage(e?.response?.data?.message || 'Subscription failed');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || 'Subscription failed');
+      } else {
+        setMessage('Subscription failed');
+      }
     } finally { setLoading(false); }
 
   }

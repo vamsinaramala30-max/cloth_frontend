@@ -1,11 +1,8 @@
 import type { Metadata } from 'next';
 
-import { Footer } from '@/components/Footer';
-import { FloatingNavbar } from '@/components/FloatingNavbar';
-
 export const metadata: Metadata = {
-  title: 'Contact | RARE RAB IT',
-  description: 'Contact Rare Rab It via SMS-only support.',
+  title: 'Contact | Plasma Atelier',
+  description: 'Contact Plasma Atelier via SMS-only support.',
 };
 
 const CONTACT_PHONE = '9390223123';
@@ -84,7 +81,7 @@ export default function ContactPage() {
                 <div className="mt-4">
                   <a
                     href={`sms:${CONTACT_PHONE}?&body=${encodeURIComponent(
-                      'Hi Rare RAB IT, I need help with my account/order. My name is ____.'
+                      'Hi Plasma Atelier, I need help with my account/order. My name is ____.'
                     )}`}
                     className="w-full inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-purple-400 px-5 py-3 text-sm font-bold text-black hover:brightness-110 transition"
                   >

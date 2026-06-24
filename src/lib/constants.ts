@@ -1,3 +1,5 @@
+import { IMAGE_MAP } from './images';
+
 export const COLORS = {
   primary: '#ffffff',
   secondary: '#000000',
@@ -22,9 +24,15 @@ export const COLORS = {
 
 export const NAVIGATION = [
   { label: 'Collections', href: '/collections' },
-  { label: 'The Vault', href: '/shop' },
-  { label: 'Lineage', href: '/lineage' },
-  { label: 'Magazine', href: '/magazine' },
+  { label: 'Vault', href: '/vault' },
+  { label: 'Shop', href: '/shop' },
+  { label: 'Editorial', href: '/magazine' },
+];
+
+export const NAV_ACTIONS = [
+  { label: 'Wishlist', href: '/wishlist', icon: 'heart' },
+  { label: 'Cart', href: '/cart', icon: 'bag' },
+  { label: 'Account', href: '/account', icon: 'user' },
 ];
 
 export const CATEGORIES = [
@@ -40,21 +48,21 @@ export const FEATURED_COLLECTIONS = [
     id: 1,
     title: 'Neural Silk',
     description: 'AI-Generated Aesthetic',
-    image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2070',
+    image: IMAGE_MAP.collection,
     color: 'from-cyan-500 to-blue-600',
   },
   {
     id: 2,
     title: 'Quantum Weave',
     description: 'Futuristic Textiles',
-    image: 'https://images.unsplash.com/photo-1552062407-c551eeda4921?q=80&w=2070',
+    image: IMAGE_MAP.runway,
     color: 'from-purple-500 to-pink-600',
   },
   {
     id: 3,
     title: 'Ethereal Form',
     description: 'Luxury Minimalism',
-    image: 'https://images.unsplash.com/photo-1490481651971-daf3dd63d3ff?q=80&w=2070',
+    image: IMAGE_MAP.hero,
     color: 'from-gold-400 to-yellow-600',
   },
 ];
@@ -65,8 +73,7 @@ export const LOOKBOOK_COLLECTIONS = [
     title: 'Aurora Silk',
     subtitle: 'Cinematic editorial growth',
     description: 'A motion-driven lookbook where light, fabric, and futurism collide.',
-    image:
-      'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200',
+    image: IMAGE_MAP.collection,
     accent: 'from-cyan-400 to-purple-500',
   },
   {
@@ -74,8 +81,7 @@ export const LOOKBOOK_COLLECTIONS = [
     title: 'Plasma Atelier',
     subtitle: 'Luxury lab collection',
     description: 'Digital couture for a runway built on AI, motion, and modern design.',
-    image:
-      'https://images.unsplash.com/photo-1519895609932-f8d2ab928aec?q=80&w=1200',
+    image: IMAGE_MAP.runway,
     accent: 'from-purple-400 to-pink-500',
   },
   {
@@ -83,8 +89,7 @@ export const LOOKBOOK_COLLECTIONS = [
     title: 'Quantum Tailor',
     subtitle: 'Futuristic silhouettes',
     description: 'Editor-crafted pieces that feel like an elegant screen of premium technology.',
-    image:
-      'https://images.unsplash.com/photo-1520975918194-2a3a62a008d8?q=80&w=1200',
+    image: IMAGE_MAP.editorial,
     accent: 'from-gold-400 to-yellow-500',
   },
 ];

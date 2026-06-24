@@ -35,8 +35,12 @@ export default function AdminProductsPage() {
         }
 
         setItems(body?.data || []);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load products');
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          setError(e.message);
+        } else {
+          setError('Failed to load products');
+        }
       } finally {
         setLoading(false);
       }
@@ -107,4 +111,3 @@ export default function AdminProductsPage() {
     </div>
   );
 }
-

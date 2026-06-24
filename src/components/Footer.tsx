@@ -73,11 +73,13 @@ export const Footer: React.FC = () => {
       const msg = res?.data?.message || 'Subscribed successfully.';
       setSubscriberState({ status: 'success', message: msg });
       setEmail('');
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Subscription failed. Please try again.';
+    } catch (err: unknown) {
+      let msg = 'Subscription failed. Please try again.';
+      if (axios.isAxiosError(err)) {
+        msg = err.response?.data?.message || msg;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
       setSubscriberState({ status: 'error', message: msg });
     }
   }
@@ -116,7 +118,7 @@ export const Footer: React.FC = () => {
           <motion.div variants={item} className="lg:col-span-1">
             <Link href="/">
               <h3 className="text-xl font-bold tracking-[0.2em] text-white uppercase mb-4 cursor-pointer hover:text-cyan-400 transition-colors">
-                RARE RAB IT
+                Plasma Atelier
               </h3>
             </Link>
             <p className="text-xs text-zinc-400 leading-relaxed mb-4">
@@ -215,7 +217,7 @@ export const Footer: React.FC = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <p>&copy; 2026 RARE RAB IT. All rights reserved.</p>
+          <p>&copy; 2026 Plasma Atelier. All rights reserved.</p>
             <div className="flex gap-6">
             <Link href="/legal/privacy-policy" className="hover:text-cyan-400 transition-colors">
               Privacy
@@ -232,4 +234,3 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
-

@@ -8,11 +8,11 @@ export const SmoothScroll: React.FC = () => {
     const lenis = new Lenis({
       duration: 1.5,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smoothTouch: true,
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      syncTouch: true,
       touchMultiplier: 2,
-    } as any);
+    });
 
     function raf(time: number) {
       lenis.raf(time);

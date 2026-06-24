@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import SafeImage from './SafeImage';
+import RobustImage from './RobustImage';
+import { IMAGE_MAP } from '../lib/images';
 
 export default function HomeHeroBackground() {
   return (
@@ -10,21 +11,23 @@ export default function HomeHeroBackground() {
 
 
       {/* Dynamic, performant hero background (do not change existing background) */}
-      <SafeImage
-        src="/images/backimg.jpeg"
+      <RobustImage
+        src={IMAGE_MAP.hero}
         alt="Hero background"
         fill
         priority
         className="object-cover opacity-60 will-change-transform"
+        sizes="100vw"
       />
 
 
       {/* Second background image (additive, keep existing background) */}
-      <SafeImage
-        src="/images/background/hero-background.webp"
+      <RobustImage
+        src={IMAGE_MAP.background}
         alt="Secondary hero background"
         fill
         className="object-cover opacity-35 will-change-transform mix-blend-screen"
+        sizes="100vw"
       />
 
       {/* Glow layers (more dynamic) */}
@@ -40,4 +43,3 @@ export default function HomeHeroBackground() {
     </div>
   );
 }
-

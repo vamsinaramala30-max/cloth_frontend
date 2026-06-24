@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import SafeImage from './SafeImage';
+import RobustImage from './RobustImage';
 
 
 
@@ -11,8 +11,6 @@ import { Product } from '@/lib/api';
 import { useCartActions } from '@/hooks/useCartActions';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuthStore } from '@/hooks/useAuth';
-import { fetchAPI, API_ENDPOINTS } from '@/lib/api';
-
 
 interface ProductDetailClientProps {
   product: Product;
@@ -23,12 +21,6 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
   const [selectedSize, setSelectedSize] = useState(product.variants?.[0]?.size ?? 'M');
   const [selectedColor, setSelectedColor] = useState(product.variants?.[0]?.colorName ?? 'Classic');
   const [isAdded, setIsAdded] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewRating, setReviewRating] = useState<number>(5);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const { addToCart } = useCartActions();
 
@@ -53,7 +45,9 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
 
   const handleAddToCart = async () => {
     if (!user) {
-      setShowAuthModal(true);
+      // In a real app, you'd want to show a modal or redirect to login
+      console.log('User not logged in, redirecting to login');
+      window.location.href = '/login';
       return;
     }
 
@@ -72,7 +66,9 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
 
   const handleWishlist = async () => {
     if (!user) {
-      setShowAuthModal(true);
+      // In a real app, you'd want to show a modal or redirect to login
+      console.log('User not logged in, redirecting to login');
+      window.location.href = '/login';
       return;
     }
 
@@ -112,14 +108,15 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
             transition={{ duration: 0.8 }}
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/10 mb-6">
-              <SafeImage
+              <RobustImage
                 src={images[0]}
-                fallbackSrc={'/images/vk/vk1'}
+                fallbackSrc={'/images/placeholder.webp'}
                 alt={product.name}
                 fill
                 priority
                 className="object-cover hover:scale-105 transition-transform duration-500"
                 loading="eager"
+                sizes="100vw"
               />
             </div>
 
@@ -130,7 +127,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
                   className="relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-cyan-400 transition-all"
                   whileHover={{ scale: 1.05 }}
                 >
-                  <SafeImage src={img} alt={`View ${index + 1}`} fill className="object-cover" loading="lazy" />
+                  <RobustImage src={img} alt={`View ${index + 1}`} fill className="object-cover" />
                 </motion.div>
               ))}
             </div>

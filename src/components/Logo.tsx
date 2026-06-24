@@ -1,12 +1,12 @@
 'use client';
 
-import SafeImage from './SafeImage';
+import ManagedImage from './ManagedImage';
 
 export default function Logo({ className, showText = false }: { className?: string; showText?: boolean }) {
   return (
     <div className={`flex items-center gap-3 ${className || ''}`}>
       <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-md bg-white/5 border border-white/10">
-        <SafeImage src="/images/rare.jpeg" alt="RARE RAB IT logo" fill className="object-contain p-1" />
+        <ManagedImage src="/images/rare.jpeg" alt="RARE RAB IT logo" fill imgClassName="object-contain p-1" sizes="40px" />
       </div>
 
       {showText && (
@@ -28,4 +28,3 @@ export default function Logo({ className, showText = false }: { className?: stri
     </div>
   );
 }
-

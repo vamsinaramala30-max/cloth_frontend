@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { IMAGE_MAP } from '../lib/images';
 import SafeImage from './SafeImage';
 
 interface FeaturedCollectionsProps {
@@ -19,21 +20,21 @@ const defaultCollections = [
     id: 1,
     title: 'Neural Silk',
     description: 'AI-Generated Aesthetic',
-    image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2070',
+    image: IMAGE_MAP.collection,
     color: 'from-cyan-500 to-blue-600',
   },
   {
     id: 2,
     title: 'Quantum Weave',
     description: 'Futuristic Textiles',
-    image: 'https://images.unsplash.com/photo-1552062407-c551eeda4921?q=80&w=2070',
+    image: IMAGE_MAP.runway,
     color: 'from-purple-500 to-pink-600',
   },
   {
     id: 3,
     title: 'Ethereal Form',
     description: 'Luxury Minimalism',
-    image: 'https://images.unsplash.com/photo-1490481651971-daf3dd63d3ff?q=80&w=2070',
+    image: IMAGE_MAP.hero,
     color: 'from-amber-400 to-orange-600',
   },
 ];

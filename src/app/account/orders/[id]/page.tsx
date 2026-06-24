@@ -4,13 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 
-import { fetchAPI } from '@/lib/api';
+import { fetchOrderHistory } from '@/lib/api';
+import { OrderHistoryItem } from '@/types';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
 
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<OrderHistoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,11 +24,19 @@ export default function OrderDetailPage() {
 
         // Backend only has /api/orders/history right now.
         // This additive UI therefore attempts to find the order within history.
-        const resp = await fetchAPI<any>('/api/orders/history', { method: 'GET' });
-        const data = resp.data?.data ?? resp.data;
-        const list = Array.isArray(data) ? data : data?.data ?? [];
+        const resp = await fetchOrderHistory();
+        const data = resp.data;
 
-        const found = (list || []).find((o: any) => String(o._id || o.orderId) === String(id));
+        let list: OrderHistoryItem[] = [];
+        if (data) {
+          if ('data' in data && Array.isArray(data.data)) {
+            list = data.data;
+          } else if (Array.isArray(data)) {
+            list = data;
+          }
+        }
+
+        const found = (list || []).find((o: OrderHistoryItem) => String(o._id || o.orderId) === String(id));
         if (mounted) setOrder(found || null);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : 'Failed to load order');
@@ -81,7 +90,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Status</span>
-                  <span className="text-white font-medium">{order.orderStatus || order.status || 'pending'}</span>
+                  <span className="text-white font-medium">{order.orderStatus || 'pending'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Total</span>
@@ -108,7 +117,7 @@ export default function OrderDetailPage() {
                     const status = idx <= 1 ? 'active' : 'inactive';
                     return (
                       <li key={label} className="flex items-start gap-3">
-                        <div className="mt-1 w-2 h-2 rounded-full bg-cyan-400/70" />
+                        <div className={`mt-1 w-2 h-2 rounded-full ${status === 'active' ? 'bg-cyan-400/90' : 'bg-zinc-600'}`} />
                         <div className="text-sm text-zinc-300">{label}</div>
                       </li>
                     );
@@ -151,4 +160,3 @@ export default function OrderDetailPage() {
     </div>
   );
 }
-

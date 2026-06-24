@@ -74,7 +74,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ value = '', onChange }) =>
       </motion.div>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        {trending.map((item, index) => (
+        {trending.map((item) => (
           <button
             key={item}
             className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] uppercase tracking-[0.35em] text-white/80 hover:bg-cyan-400/10 hover:border-cyan-400/30"

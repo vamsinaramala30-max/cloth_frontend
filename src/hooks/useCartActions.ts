@@ -5,7 +5,7 @@ import { useAppStore } from '@/lib/store';
 import * as api from '@/lib/api';
 
 export const useCartActions = () => {
-  const { addToCart: addToCartStore, removeFromCart, updateCartQuantity } = useAppStore();
+  const { removeFromCart, updateCartQuantity } = useAppStore();
 
   const addToCart = useCallback(
     async (productId: string, variantSku: string, quantity: number, size: string, color: string) => {

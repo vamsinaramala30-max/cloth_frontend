@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import RobustImage from '@/components/RobustImage';
+import { IMAGE_MAP } from '@/lib/images';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,7 +46,7 @@ export default function PremiumAuthPage() {
   const router = useRouter();
 
   const { user } = useAuthStore();
-  const { handleLogin, handleRegister, fetchUser } = useAuthActions();
+  const { handleLogin, handleRegister } = useAuthActions();
 
   const [mode, setMode] = useState<Mode>('login');
 
@@ -80,11 +82,11 @@ export default function PremiumAuthPage() {
     [registerStrength]
   );
 
-  const redirectAuthenticated = () => {
+  const redirectAuthenticated = useCallback(() => {
     // Keep it safe: dashboard route may be /dashboard; fallback to /
     const target = '/dashboard';
     router.replace(target);
-  };
+  }, [router]);
 
   useEffect(() => {
     // Preserve current session after refresh by fetching /account/me (cookie-based)
@@ -105,7 +107,7 @@ export default function PremiumAuthPage() {
         // ignore; unauthenticated user stays on /auth
       }
     })();
-  }, [router]);
+  }, [router, redirectAuthenticated, user]);
 
   useEffect(() => {
     if (toast) {
@@ -215,7 +217,7 @@ export default function PremiumAuthPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_0_60px_rgba(0,217,255,0.12)]">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_0_60px_rgba(0,217,255,0.12)] h-full">
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-amber-400/10" />
               <div className="relative z-10">
                 <p className="text-xs uppercase tracking-[0.22em] text-zinc-300">Maison Slogan</p>
@@ -235,12 +237,13 @@ export default function PremiumAuthPage() {
               </div>
 
               <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
-              <img
+              <RobustImage
                 alt="Fashion editorial background"
-                src="/images/vk/editorial-background.webp"
-                className="absolute inset-0 w-full h-full object-cover opacity-15"
-              />
-              <div className="absolute inset-0 bg-black/40" />
+                src={IMAGE_MAP.editorial}
+                fill
+                className="object-cover opacity-15"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              /><div className="absolute inset-0 bg-black/40" />
             </div>
           </div>
 
@@ -700,4 +703,3 @@ export default function PremiumAuthPage() {
     </div>
   );
 }
-

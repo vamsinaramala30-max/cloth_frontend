@@ -55,7 +55,7 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
   const router = useRouter();
 
   const { handleLogin, handleRegister, fetchUser } = useAuthActions();
-  const { user } = useAuthStore();
+  const {} = useAuthStore();
 
   const [toast, setToast] = useState<Toast>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -436,4 +436,3 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
     </motion.div>
   );
 }
-

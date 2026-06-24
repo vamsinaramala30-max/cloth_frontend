@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+import ManagedImage from '@/components/ManagedImage';
+
 export default function LuxuryVideo({
   poster,
   className,
@@ -11,14 +13,12 @@ export default function LuxuryVideo({
   className?: string;
   reduced?: boolean;
 }) {
-  const [inView, setInView] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (reduced) {
       setShouldRender(false);
-      setInView(false);
       return;
     }
 
@@ -28,7 +28,6 @@ export default function LuxuryVideo({
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setInView(true);
           setShouldRender(true);
           io.disconnect();
         }
@@ -57,11 +56,13 @@ export default function LuxuryVideo({
           src="/videos/rare-rab-it-fashion.mp4"
         />
       ) : (
-        <img
+        <ManagedImage
           src={poster}
           alt="Luxury fashion"
-          className="h-full w-full object-cover"
-          loading="lazy"
+          className="h-full w-full"
+          imgClassName="object-cover"
+          fill
+          sizes="100vw"
         />
       )}
 
@@ -70,4 +71,3 @@ export default function LuxuryVideo({
     </div>
   );
 }
-

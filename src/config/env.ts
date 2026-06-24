@@ -13,7 +13,7 @@ interface FrontendConfig {
 }
 
 function getApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:5002/api';
+  return process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:5001/api';
 }
 
 function getEnvironment(): 'development' | 'production' | 'test' {
@@ -37,7 +37,7 @@ export const config: FrontendConfig = {
 // Validate on load
 if (!config.apiUrl) {
   console.error('[FRONTEND CONFIG] Missing NEXT_PUBLIC_API_URL environment variable');
-  console.warn('[FRONTEND CONFIG] Defaulting to http://localhost:5000/api');
+  console.warn('[FRONTEND CONFIG] Defaulting to http://localhost:5001/api');
 }
 
 console.debug('[FRONTEND CONFIG]', {

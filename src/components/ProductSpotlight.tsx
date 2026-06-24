@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import Link from 'next/link';
+import { IMAGE_MAP } from '../lib/images';
+import RobustImage from './RobustImage';
 
 export const ProductSpotlight: React.FC = () => {
   const [hovered, setHovered] = useState(false);
@@ -89,7 +91,13 @@ export const ProductSpotlight: React.FC = () => {
 
             <div className="relative z-10 flex h-full items-center justify-center px-8">
               <div className="relative w-full max-w-xl h-80 rounded-[1.8rem] overflow-hidden border border-white/10 bg-gradient-to-br from-white/10 to-black/20 shadow-inner shadow-black/20">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1521334884684-d80222895322?q=80&w=1000')] bg-cover bg-center" />
+                <RobustImage
+                  src={IMAGE_MAP.runway}
+                  alt="Nebula Frame Coat"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="absolute inset-0 object-cover object-center"
+                />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
                 <div className="absolute left-6 bottom-6 z-20 rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl">
                   <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-300">Limited runway</p>

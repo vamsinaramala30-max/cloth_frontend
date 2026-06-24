@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { FloatingEditorialSection } from '@/components/FloatingEditorialSection';
 import { HeroSection } from '@/components/HeroSection';
 import { CircularCategories } from '@/components/CircularCategories';
 import { FeaturedCollections } from '@/components/FeaturedCollections';
@@ -12,8 +13,9 @@ import { LuxuryLookbook } from '@/components/LuxuryLookbook';
 import { ScrollStorySection } from '@/components/ScrollStorySection';
 import { ThreeProductScene } from '@/components/ThreeProductScene';
 import { fetchProducts, Product } from '@/lib/api';
+import { IMAGE_MAP, getLocalProductImage } from '@/lib/images';
 
-import HomeHeroBackground from '@/components/HomeHeroBackground';
+
 
 const fallbackProducts: Product[] = [
   {
@@ -33,7 +35,7 @@ const fallbackProducts: Product[] = [
         colorName: 'Cyan Haze',
         size: 'S',
         stock: 12,
-        images: ['/images/background/hero-background.webp'],
+        images: [IMAGE_MAP.background],
       },
     ],
     averageRating: 4.8,
@@ -58,7 +60,7 @@ const fallbackProducts: Product[] = [
         colorName: 'Violet Pulse',
         size: 'M',
         stock: 20,
-        images: ['/images/background/hero-background.webp'],
+        images: [IMAGE_MAP.background],
       },
     ],
     averageRating: 4.6,
@@ -83,7 +85,7 @@ const fallbackProducts: Product[] = [
         colorName: 'Pink Aurora',
         size: 'L',
         stock: 8,
-        images: ['/images/background/hero-background.webp'],
+        images: [IMAGE_MAP.background],
       },
     ],
     averageRating: 4.9,
@@ -108,7 +110,7 @@ const fallbackProducts: Product[] = [
         colorName: 'Amber Signal',
         size: 'S',
         stock: 15,
-        images: ['/images/background/hero-background.webp'],
+        images: [IMAGE_MAP.background],
       },
     ],
     averageRating: 4.4,
@@ -148,11 +150,9 @@ export default function HomeClient() {
   }, []);
 
   return (
-    <div className="relative z-0">
-      <HomeHeroBackground />
-
-      {/* Hero Section */}
+    <div className="relative min-h-screen overflow-x-hidden bg-transparent">
       <HeroSection />
+      <FloatingEditorialSection />
 
       {/* Campaign Video Showcase */}
       <CampaignVideoSection />
@@ -204,26 +204,37 @@ export default function HomeClient() {
           ) : null}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-{loading
+            {loading
               ? Array.from({ length: 8 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-96 rounded-xl bg-white/5 animate-pulse"
-                  />
-                ))
-              : (products.length ? products : fallbackProducts).map((product, index) => (
+                <div
+                  key={index}
+                  className="h-96 rounded-xl bg-white/5 animate-pulse"
+                />
+              ))
+              : (products.length ? products : fallbackProducts).map((product, index) => {
+                const rawImg = product.variants?.[0]?.images?.[0];
+                const normalized = (() => {
+                  const v = typeof rawImg === 'string' ? rawImg.trim() : '';
+                  if (!v) return '';
+                  if (v.startsWith('/images/') || v.startsWith('images/')) {
+                    return v.startsWith('/') ? v : `/${v}`;
+                  }
+                  return '';
+                })();
+
+                return (
                   <ProductCard
                     key={product._id}
                     id={product._id}
                     name={product.name}
                     price={product.salePrice ?? product.basePrice}
-                    image={product.variants?.[0]?.images?.[0] || ''}
+                    image={normalized || getLocalProductImage(product.name || product._id, index)}
                     category={product.category}
                     isFeatured={product.isFeatured}
                     delay={index * 0.1}
                   />
-                ))} 
-
+                );
+              })}
           </div>
 
           <motion.div
@@ -299,4 +310,3 @@ export default function HomeClient() {
     </div>
   );
 }
-

@@ -13,13 +13,14 @@ function usePrefersReducedMotion() {
     const set = () => setReduced(!!mq.matches);
     set();
     // Safari compatibility
-    const anyMq = mq as any;
+    const anyMq = mq as unknown as { addEventListener?: (type: string, listener: EventListenerOrEventListenerObject) => void };
     if (anyMq.addEventListener) {
       mq.addEventListener('change', set);
       return () => mq.removeEventListener('change', set);
     }
-    mq.addListener(set);
-    return () => mq.removeListener(set);
+    const legacyMq = mq as unknown as { addListener: (listener: (ev: MediaQueryListEvent) => void) => void; removeListener: (listener: (ev: MediaQueryListEvent) => void) => void };
+    legacyMq.addListener(set);
+    return () => legacyMq.removeListener(set);
   }, []);
 
   return reduced;

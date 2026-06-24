@@ -57,12 +57,12 @@ export default function ProductForm({
     basePrice: initial?.basePrice ?? "",
     salePrice: initial?.salePrice ?? "",
     category: (initial?.category as AdminProductInput["category"]) ?? "",
-    collections: (initial?.collections as any as string) ?? "",
-    tags: (initial?.tags as any as string) ?? "",
+    collections: (initial?.collections as string) ?? "",
+    tags: (initial?.tags as string) ?? "",
     isFeatured: initial?.isFeatured ?? false,
     isActive: initial?.isActive ?? true,
     variants: initial?.variants?.length
-      ? (initial.variants as any)
+      ? (initial.variants as AdminProductVariantInput[])
       : [defaultVariant],
   });
 
@@ -227,7 +227,7 @@ export default function ProductForm({
           </label>
           <select
             value={values.category}
-            onChange={(e) => setField("category", e.target.value as any)}
+            onChange={(e) => setField("category", e.target.value as AdminProductInput['category'])}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
           >
             <option value="">Select...</option>
@@ -244,7 +244,7 @@ export default function ProductForm({
           </label>
           <input
             value={values.collections}
-            onChange={(e) => setField("collections", e.target.value as any)}
+            onChange={(e) => setField("collections", e.target.value)}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
             placeholder="Neural Silk, Quantum Weave"
           />
@@ -256,7 +256,7 @@ export default function ProductForm({
           </label>
           <input
             value={values.tags}
-            onChange={(e) => setField("tags", e.target.value as any)}
+            onChange={(e) => setField("tags", e.target.value)}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
             placeholder="limited, luxury, futurism"
           />

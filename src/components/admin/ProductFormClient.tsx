@@ -18,8 +18,8 @@ export type AdminProductInput = {
   basePrice: number | '';
   salePrice: number | '';
   category: 'Men' | 'Women' | 'Kids' | 'Unisex' | '';
-  collections: string;
-  tags: string;
+  collections: string | string[];
+  tags: string | string[];
   isFeatured: boolean;
   isActive: boolean;
   variants: AdminProductVariantInput[];
@@ -56,12 +56,12 @@ export default function ProductFormClient({
     description: initial?.description ?? '',
     basePrice: initial?.basePrice ?? '',
     salePrice: initial?.salePrice ?? '',
-    category: (initial?.category as AdminProductInput['category']) ?? '',
-    collections: (initial?.collections as any as string) ?? '',
-    tags: (initial?.tags as any as string) ?? '',
+    category: initial?.category ?? '',
+    collections: Array.isArray(initial?.collections) ? initial.collections.join(', ') : '',
+    tags: Array.isArray(initial?.tags) ? initial.tags.join(', ') : '',
     isFeatured: initial?.isFeatured ?? false,
     isActive: initial?.isActive ?? true,
-    variants: initial?.variants?.length ? (initial.variants as any) : [defaultVariant],
+    variants: initial?.variants?.length ? initial.variants : [defaultVariant],
   });
 
   const derivedSlug = useMemo(() => {
@@ -119,24 +119,12 @@ export default function ProductFormClient({
           return;
         }
 
-        const payload: AdminProductInput = {
+        const payload: AdminProductInput & { collections: string[]; tags: string[] } = {
           ...values,
           slug: derivedSlug,
-          collections: String(values.collections),
-          tags: String(values.tags),
+          collections: (typeof values.collections === 'string' ? values.collections.split(',') : values.collections).map((s: string) => s.trim()).filter(Boolean),
+          tags: (typeof values.tags === 'string' ? values.tags.split(',') : values.tags).map((s: string) => s.trim()).filter(Boolean),
         };
-
-        // Convert comma strings into arrays expected by backend controller
-        // (backend controller accepts arrays for collections/tags).
-        (payload as any).collections = String(values.collections)
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-
-        (payload as any).tags = String(values.tags)
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
 
         await onSubmit(payload);
       }}
@@ -203,7 +191,7 @@ export default function ProductFormClient({
           <label className="block text-xs font-bold tracking-[0.2em] text-white uppercase mb-2">Category</label>
           <select
             value={values.category}
-            onChange={(e) => setField('category', e.target.value as any)}
+            onChange={(e) => setField('category', e.target.value as AdminProductInput['category'])}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
           >
             <option value="">Select...</option>
@@ -218,7 +206,7 @@ export default function ProductFormClient({
           <label className="block text-xs font-bold tracking-[0.2em] text-white uppercase mb-2">Collections (comma separated)</label>
           <input
             value={values.collections}
-            onChange={(e) => setField('collections', e.target.value as any)}
+            onChange={(e) => setField('collections', e.target.value)}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
             placeholder="Neural Silk, Quantum Weave"
           />
@@ -228,7 +216,7 @@ export default function ProductFormClient({
           <label className="block text-xs font-bold tracking-[0.2em] text-white uppercase mb-2">Tags (comma separated)</label>
           <input
             value={values.tags}
-            onChange={(e) => setField('tags', e.target.value as any)}
+            onChange={(e) => setField('tags', e.target.value)}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
             placeholder="limited, luxury, futurism"
           />
@@ -376,4 +364,3 @@ export default function ProductFormClient({
     </form>
   );
 }
-

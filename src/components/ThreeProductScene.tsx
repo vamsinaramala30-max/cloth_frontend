@@ -3,16 +3,21 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows, Environment, Float, PresentationControls } from '@react-three/drei';
 import { useRef } from 'react';
+import { Mesh, Clock } from 'three';
+
+interface FrameState {
+  clock: Clock;
+}
 
 // Workaround for react-three-fiber runtime crash:
 // TypeError: Cannot read properties of undefined (reading 'S')
 // Keeping pointer-events disabled and adding eventSource={false}
 // prevents fiber from wiring up the problematic event system.
 const FloatingProduct = () => {
-  const mesh = useRef<any>(null);
+  const mesh = useRef<Mesh>(null);
 
 
-  useFrame((state: any) => {
+  useFrame((state: FrameState) => {
 
 
 
@@ -42,7 +47,7 @@ const FloatingProduct = () => {
 
 export const ThreeProductScene = () => {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/80 shadow-2xl shadow-cyan-500/20 h-[520px]">
+    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl shadow-cyan-500/20 h-[520px]">
       <Canvas camera={{ position: [0, 0, 6], fov: 38 }} shadows eventSource={false}>
         <ambientLight intensity={0.25} />
         <directionalLight position={[5, 5, 5]} intensity={1.3} color="#8d69ff" />
@@ -68,4 +73,3 @@ export const ThreeProductScene = () => {
     </div>
   );
 };
-

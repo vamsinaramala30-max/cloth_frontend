@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { SearchBar } from '@/components/SearchBar';
 import { CATEGORIES } from '@/lib/constants';
 import { fetchProducts, Product } from '@/lib/api';
+import { getLocalProductImage } from '@/lib/images';
 
 const sortOptions = [
   { label: 'Latest', value: 'latest' },
@@ -175,18 +176,30 @@ export default function ShopPage() {
                   className="h-96 rounded-xl bg-white/5 animate-pulse"
                 />
               ))
-            : products.map((product, index) => (
-                <ProductCard
-                  key={product._id}
-                  id={product._id}
-                  name={product.name}
-                  price={product.salePrice ?? product.basePrice}
-                  image={product.variants?.[0]?.images?.[0] ?? 'https://images.unsplash.com/photo-1551028719-00167b16ebc5?q=80&w=1000'}
-                  category={product.category}
-                  isFeatured={product.isFeatured}
-                  delay={index * 0.05}
-                />
-              ))}
+            : products.map((product, index) => {
+                const rawImg = product.variants?.[0]?.images?.[0];
+                const normalized = (() => {
+                  const v = typeof rawImg === 'string' ? rawImg.trim() : '';
+                  if (!v) return '';
+                  if (v.startsWith('/images/') || v.startsWith('images/')) {
+                    return v.startsWith('/') ? v : `/${v}`;
+                  }
+                  return '';
+                })();
+
+                return (
+                  <ProductCard
+                    key={product._id}
+                    id={product._id}
+                    name={product.name}
+                    price={product.salePrice ?? product.basePrice}
+                    image={normalized || getLocalProductImage(product.name || product._id, index)}
+                    category={product.category}
+                    isFeatured={product.isFeatured}
+                    delay={index * 0.05}
+                  />
+                );
+              })}
         </motion.div>
 
         {!loading && products.length === 0 && (

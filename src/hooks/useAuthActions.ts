@@ -44,10 +44,10 @@ export const useAuthActions = () => {
           return false;
         }
 
-        const user = (response.data as any)?.user;
+        const user = response.data?.user;
         if (user) {
           setUser(user);
-          setToken((response.data as any)?.token);
+          setToken(response.data?.token ?? null);
         }
 
         return true;

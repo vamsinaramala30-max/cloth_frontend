@@ -33,7 +33,7 @@ export default function NotFound() {
             Page Not Found
           </h2>
           <p className="text-zinc-400 mb-8 text-base md:text-lg">
-            The luxury collection you're looking for doesn't exist. Let's get you back on track.
+            {"The luxury collection you're looking for doesn't exist. Let's get you back on track."}
           </p>
         </motion.div>
 
@@ -73,7 +73,7 @@ export default function NotFound() {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <p>✦ ERROR: COLLECTION NEXUS OFFLINE ✦</p>
-Redirecting to RARE  RAB IT database...
+Redirecting to Plasma Atelier database...
         </motion.div>
       </motion.div>
     </div>

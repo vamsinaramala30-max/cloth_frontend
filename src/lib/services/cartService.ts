@@ -3,7 +3,7 @@
 import * as api from '@/lib/api';
 
 export type CartLine = {
-  _id: string;
+  id: string;
   productId: string;
   name: string;
   price: number;
@@ -15,10 +15,13 @@ export type CartLine = {
 
 export async function getCartLines(): Promise<CartLine[]> {
   const response = await api.getCart();
-  const cart = response.data as any;
-  const items = cart?.data?.items ?? cart?.items ?? [];
-  return (items || []).map((it: any) => ({
-    _id: it._id,
+  if (response.error || !response.data) {
+    console.error('Failed to fetch cart:', response.error);
+    return [];
+  }
+  const items = response.data.data.items;
+  return items.map((it) => ({
+    id: it.id,
     productId: it.productId,
     name: it.name,
     price: it.price,
@@ -36,4 +39,3 @@ export async function removeCartLine(itemId: string) {
 export async function setCartLineQuantity(itemId: string, quantity: number) {
   return api.updateCartItem(itemId, quantity);
 }
-

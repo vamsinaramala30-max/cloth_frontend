@@ -7,8 +7,6 @@ import { gsap } from 'gsap';
 
 import Logo from '@/components/Logo';
 
-import { GlassCard } from '@/components/GlassCard';
-
 const LuxuryVideo = dynamic(() => import('./_parts/LuxuryVideo'), { ssr: false });
 const CityLights = dynamic(() => import('./_parts/CityLights'), { ssr: false });
 const AuroraOverlays = dynamic(() => import('./_parts/AuroraOverlays').then((m) => m.default), { ssr: false });
@@ -25,14 +23,15 @@ function useSafePrefersReducedMotion() {
     apply();
 
     // Safari compatibility
-    const anyMq = mq as any;
+    const anyMq = mq as unknown as { addEventListener?: (type: string, listener: EventListenerOrEventListenerObject) => void };
     if (anyMq.addEventListener) {
       mq.addEventListener('change', apply);
       return () => mq.removeEventListener('change', apply);
     }
 
-    mq.addListener(apply);
-    return () => mq.removeListener(apply);
+    const legacyMq = mq as unknown as { addListener: (listener: (ev: MediaQueryListEvent) => void) => void; removeListener: (listener: (ev: MediaQueryListEvent) => void) => void };
+    legacyMq.addListener(apply);
+    return () => legacyMq.removeListener(apply);
   }, []);
 
   return reduced;
@@ -46,7 +45,6 @@ export function WelcomeLanding() {
   const logoTextRef = useRef<HTMLDivElement | null>(null);
 
   const [soundOn, setSoundOn] = useState(false);
-  const [soundLoaded, setSoundLoaded] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -87,9 +85,6 @@ export function WelcomeLanding() {
       // Replace /sounds/rare-rab-it.wav with a real file if you add one.
       audioRef.current = new Audio('/sounds/rare-rab-it.mp3');
       audioRef.current.preload = 'none';
-
-      audioRef.current.addEventListener('canplaythrough', () => setSoundLoaded(true));
-      audioRef.current.addEventListener('error', () => setSoundLoaded(false));
 
       audioRef.current.loop = true;
       audioRef.current.volume = 0.35;

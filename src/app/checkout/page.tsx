@@ -2,19 +2,27 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-import { useAuthStore } from '@/hooks/useAuth';
 
 import { getCartLines } from '@/lib/services/cartService';
 import { fetchAPI, API_ENDPOINTS } from '@/lib/api';
 
+interface CheckoutItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image?: string;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<CheckoutItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +74,7 @@ export default function CheckoutPage() {
     // at POST /api/payment/stripe.
     // Order creation + persistence is handled elsewhere in the modular router,
     // but this page is built to be additive and resilient.
-    const paymentResponse = await fetchAPI<any>(`${API_ENDPOINTS.PAYMENT ?? '/api/payment/stripe'}`, {
+    const paymentResponse = await fetchAPI<{ orderId?: string; clientSecret?: string }>(`${API_ENDPOINTS.PAYMENT ?? '/api/payment/stripe'}`, {
       method: 'POST',
       body: JSON.stringify({ totalAmount: total }),
     });
@@ -298,4 +306,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

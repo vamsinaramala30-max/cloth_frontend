@@ -8,7 +8,7 @@ import { GlassCard } from './GlassCard';
 export const CampaignVideoSection: React.FC = () => {
   return (
     <section className="relative w-full overflow-hidden py-24 md:py-32 px-4 md:px-8">
-      <div className="absolute inset-0 bg-black/85" />
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       <div className="absolute inset-0 overflow-hidden">
         <video
           className="absolute inset-0 h-full w-full object-cover opacity-40"
@@ -18,7 +18,7 @@ export const CampaignVideoSection: React.FC = () => {
           loop
           playsInline
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/90 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent" />
       </div>
 
       <div className="relative z-20 max-w-7xl mx-auto grid gap-10 lg:grid-cols-[1.3fr_0.9fr] items-center">

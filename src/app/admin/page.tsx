@@ -77,8 +77,9 @@ export default function AdminDashboardPage() {
         }
 
         setAnalytics(body?.analytics || null);
-      } catch (e: any) {
-        setError(e?.message || 'Unauthorized or analytics unavailable');
+      } catch (e: unknown) {
+        const errMsg = e instanceof Error ? e.message : 'Unauthorized or analytics unavailable';
+        setError(errMsg);
       } finally {
         setLoading(false);
       }

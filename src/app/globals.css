@@ -11,9 +11,20 @@
 @tailwind utilities;
 
 @keyframes hero-sweep {
-  0% { transform: translateX(-12%) translateY(0%); filter: blur(0px); }
-  50% { transform: translateX(12%) translateY(-2%); filter: blur(1px); }
-  100% { transform: translateX(-12%) translateY(0%); filter: blur(0px); }
+  0% {
+    transform: translateX(-12%) translateY(0%);
+    filter: blur(0px);
+  }
+
+  50% {
+    transform: translateX(12%) translateY(-2%);
+    filter: blur(1px);
+  }
+
+  100% {
+    transform: translateX(-12%) translateY(0%);
+    filter: blur(0px);
+  }
 }
 
 .animate-\[hero-sweep_6s_ease-in-out_infinite\] {
@@ -33,13 +44,14 @@
   @apply selection:bg-cyan-400 selection:text-black;
 }
 
-html {
-  scroll-behavior: smooth;
+html,
+body {
+  min-height: 100%;
+  background: transparent !important;
 }
 
 body {
-  @apply bg-luxury-darker text-luxury-accent font-sans antialiased;
-  background: linear-gradient(135deg, #030303 0%, #0a0a0a 100%);
+  @apply text-luxury-accent font-sans antialiased;
 }
 
 /* Glass Morphism Base */
@@ -79,6 +91,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -90,6 +103,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -97,11 +111,13 @@ body {
 }
 
 @keyframes glow-pulse {
+
   0%,
   100% {
     opacity: 1;
     box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
   }
+
   50% {
     opacity: 0.8;
     box-shadow: 0 0 40px rgba(0, 217, 255, 0.8);
@@ -112,9 +128,11 @@ body {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -194,7 +212,7 @@ input:focus {
 }
 
 .bg-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0.08,0.05) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08,0.05) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08, 0.05) 0%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0.08, 0.05) 100%);
   background-size: 200% 100%;
   animation: shimmer 6s ease-in-out infinite;
 }
@@ -205,12 +223,21 @@ input:focus {
 }
 
 .light-trail {
-  background: radial-gradient(circle, rgba(0,217,255,0.35), transparent 45%);
+  background: radial-gradient(circle, rgba(0, 217, 255, 0.35), transparent 45%);
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.8; box-shadow: 0 0 40px rgba(0,217,255,0.25); }
-  50% { opacity: 1; box-shadow: 0 0 60px rgba(0,217,255,0.45); }
+
+  0%,
+  100% {
+    opacity: 0.8;
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.25);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 60px rgba(0, 217, 255, 0.45);
+  }
 }
 
 .animate-pulse-glow {
@@ -230,4 +257,17 @@ input:focus {
   h3 {
     @apply text-2xl;
   }
+}
+
+/* Golden Silk / Drapeva redsign alignment utilities */
+.container-luxe {
+  @apply w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-[90rem];
+}
+
+.eyebrow {
+  @apply font-sans text-xs font-semibold tracking-[0.15em] uppercase text-zinc-300;
+}
+
+.gold-divider {
+  @apply inline-block w-12 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-400 align-middle;
 }
