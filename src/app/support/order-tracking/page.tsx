@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Order Tracking | RARE RAB IT',
+  title: 'Order Tracking | Plasma Atelier',
   description: 'Track your order with premium support—find dispatch updates and shipment status information.',
 };
 

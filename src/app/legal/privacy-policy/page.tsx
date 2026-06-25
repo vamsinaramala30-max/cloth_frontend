@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | RARE RAB IT',
-  description: 'Learn how RARE RAB IT collects, uses, and protects your personal information.',
+  title: 'Privacy Policy | Plasma Atelier',
+  description: 'Learn how Plasma Atelier collects, uses, and protects your personal information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        This Privacy Policy explains how RARE RAB IT collects, uses, and
+        This Privacy Policy explains how Plasma Atelier collects, uses, and
         protects personal information when you visit our website and interact
         with our services.
       </p>

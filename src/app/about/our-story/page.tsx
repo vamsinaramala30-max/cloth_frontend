@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Our Story | RARE RAB IT',
+  title: 'Our Story | Plasma Atelier',
   description:
-    'Discover the genesis of RARE RAB IT—luxury fashion crafted with technology, precision, and soul.',
+    'Discover the genesis of Plasma Atelier—luxury fashion crafted with technology, precision, and soul.',
   openGraph: {
-    title: 'Our Story | RARE RAB IT',
+    title: 'Our Story | Plasma Atelier',
     description:
-      'Discover the genesis of RARE RAB IT—luxury fashion crafted with technology, precision, and soul.',
+      'Discover the genesis of Plasma Atelier—luxury fashion crafted with technology, precision, and soul.',
     type: 'website',
   },
 };
@@ -20,7 +20,7 @@ export default function OurStoryPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        RARE RAB IT was born from a simple conviction: luxury should feel both
+        Plasma Atelier was born from a simple conviction: luxury should feel both
         timeless and inevitable—like craftsmanship you can wear, and innovation
         you can trust.
       </p>
@@ -38,7 +38,7 @@ export default function OurStoryPage() {
       </p>
 
       <section className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white">RARE RAB IT, in one line</h2>
+        <h2 className="text-lg font-semibold text-white">Plasma Atelier, in one line</h2>
         <p className="mt-3 text-zinc-400 leading-relaxed">
           Luxury fashion crafted where premium craftsmanship meets fashion-tech
           imagination.

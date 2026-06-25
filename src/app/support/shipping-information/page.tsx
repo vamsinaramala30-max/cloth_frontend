@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Shipping Information | RARE RAB IT',
+  title: 'Shipping Information | Plasma Atelier',
   description:
-    'Delivery methods, timelines, international shipping, tracking, and shipping costs for RARE RAB IT.',
+    'Delivery methods, timelines, international shipping, tracking, and shipping costs for Plasma Atelier.',
 };
 
 export default function ShippingInformationPage() {

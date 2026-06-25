@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sustainability | RARE RAB IT',
+  title: 'Sustainability | Plasma Atelier',
   description:
     'Sustainability initiatives—designing for longevity, waste-aware production, and responsible material choices.',
   openGraph: {
-    title: 'Sustainability | RARE RAB IT',
+    title: 'Sustainability | Plasma Atelier',
     description:
       'Sustainability initiatives—designing for longevity, waste-aware production, and responsible material choices.',
     type: 'website',
@@ -20,7 +20,7 @@ export default function SustainabilityPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        Sustainability at RARE RAB IT means designing for a longer life. We
+        Sustainability at Plasma Atelier means designing for a longer life. We
         prioritize durable materials, minimize waste in production planning,
         and aim for practices that reduce unnecessary turnover.
       </p>

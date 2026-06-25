@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Craftsmanship | RARE RAB IT',
+  title: 'Craftsmanship | Plasma Atelier',
   description:
     'Premium craftsmanship details—tailoring discipline, finishing precision, and couture-level attention in every seam.',
   openGraph: {
-    title: 'Craftsmanship | RARE RAB IT',
+    title: 'Craftsmanship | Plasma Atelier',
     description:
       'Premium craftsmanship details—tailoring discipline, finishing precision, and couture-level attention in every seam.',
     type: 'website',
@@ -20,7 +20,7 @@ export default function CraftsmanshipPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        Luxury is the sum of invisible decisions. RARE RAB IT garments are
+        Luxury is the sum of invisible decisions. Plasma Atelier garments are
         shaped by refined pattern logic, controlled construction, and finishing
         techniques designed to last.
       </p>

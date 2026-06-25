@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | RARE RAB IT',
-  description: 'Official Terms of Service for using the RARE RAB IT website and purchasing.',
+  title: 'Terms of Service | Plasma Atelier',
+  description: 'Official Terms of Service for using the Plasma Atelier website and purchasing.',
 };
 
 export default function TermsOfServicePage() {
@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        Welcome to RARE RAB IT. By using our website, you agree to these Terms
+        Welcome to Plasma Atelier. By using our website, you agree to these Terms
         of Service.
       </p>
 
@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
 
         <h2 className="text-white font-semibold">Limitation of liability</h2>
         <p className="text-zinc-400 leading-relaxed">
-          To the fullest extent permitted by law, RARE RAB IT is not liable for
+          To the fullest extent permitted by law, Plasma Atelier is not liable for
           indirect or consequential damages.
         </p>
       </section>

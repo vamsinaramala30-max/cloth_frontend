@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | RARE RAB IT',
+  title: 'Privacy Policy | Plasma Atelier',
   description: 'Privacy Policy',
 };
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions | RARE RAB IT',
+  title: 'Frequently Asked Questions | Plasma Atelier',
   description:
     'Luxury fashion support FAQs covering shipping, returns, sizing, orders, payments, care, and international delivery.',
 };

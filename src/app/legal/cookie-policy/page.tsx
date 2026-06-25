@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy | RARE RAB IT',
-  description: 'Learn how RARE RAB IT uses cookies to enhance your experience and measure performance.',
+  title: 'Cookie Policy | Plasma Atelier',
+  description: 'Learn how Plasma Atelier uses cookies to enhance your experience and measure performance.',
 };
 
 export default function CookiePolicyPage() {

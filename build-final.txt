@@ -13,23 +13,23 @@ To eliminate this warning, add "type": "module" to C:\Users\Admin\OneDrive\Deskt
 [FRONTEND CONFIG] {
   apiUrl: 'http://localhost:5002/api',
   environment: 'development',
-  appName: 'Rare Rabbit'
+  appName: 'Plasma Atelier'
 }
    Generating static pages (0/32) ...
 [FRONTEND CONFIG] {
   apiUrl: 'http://localhost:5002/api',
   environment: 'development',
-  appName: 'Rare Rabbit'
+  appName: 'Plasma Atelier'
 }
 [FRONTEND CONFIG] {
   apiUrl: 'http://localhost:5002/api',
   environment: 'development',
-  appName: 'Rare Rabbit'
+  appName: 'Plasma Atelier'
 }
 [FRONTEND CONFIG] {
   apiUrl: 'http://localhost:5002/api',
   environment: 'development',
-  appName: 'Rare Rabbit'
+  appName: 'Plasma Atelier'
 }
    Generating static pages (8/32) 
    Generating static pages (16/32) 

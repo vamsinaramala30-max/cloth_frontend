@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Brand Vision | RARE RAB IT',
+  title: 'Brand Vision | Plasma Atelier',
   description:
-    'Explore the RARE RAB IT brand vision—precision luxury, fashion-tech creativity, and a future-first atelier mindset.',
+    'Explore the Plasma Atelier brand vision—precision luxury, fashion-tech creativity, and a future-first atelier mindset.',
   openGraph: {
-    title: 'Brand Vision | RARE RAB IT',
+    title: 'Brand Vision | Plasma Atelier',
     description:
-      'Explore the RARE RAB IT brand vision—precision luxury, fashion-tech creativity, and a future-first atelier mindset.',
+      'Explore the Plasma Atelier brand vision—precision luxury, fashion-tech creativity, and a future-first atelier mindset.',
     type: 'website',
   },
 };

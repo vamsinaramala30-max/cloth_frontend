@@ -5,7 +5,7 @@ export default function StartPage() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8 md:p-10 shadow-[0_0_60px_rgba(0,217,255,0.12)]">
         <h1 className="text-white text-3xl md:text-4xl font-light tracking-[0.08em] uppercase text-center">
-          RARE RAB IT
+          Plasma Atelier
         </h1>
         <p className="mt-3 text-zinc-400 text-sm md:text-base text-center">
           Start your journey: choose Home or Login.

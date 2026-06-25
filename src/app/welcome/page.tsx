@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { WelcomeLanding } from '@/components/welcome/WelcomeLanding';
 
 export const metadata: Metadata = {
-  title: 'Welcome | RARE RAB IT',
+  title: 'Welcome | Plasma Atelier',
   description: 'Premium futuristic luxury fashion experience',
 };
 

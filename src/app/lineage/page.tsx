@@ -8,12 +8,12 @@ import { ManufacturingJourney } from '@/components/lineage/ManufacturingJourney'
 import { SustainabilitySection } from '@/components/lineage/SustainabilitySection';
 
 export const metadata: Metadata = {
-  title: 'Lineage | Rare Rabbit',
-  description: 'A luxury heritage timeline: founder story, manufacturing journey, and sustainability from Rare Rabbit.',
-  keywords: ['rare rabbit', 'luxury brand heritage', 'manufacturing', 'sustainability', 'fashion story'],
+  title: 'Lineage | Plasma Atelier',
+  description: 'A luxury heritage timeline: founder story, manufacturing journey, and sustainability from Plasma Atelier.',
+  keywords: ['Plasma Atelier', 'luxury brand heritage', 'manufacturing', 'sustainability', 'fashion story'],
   openGraph: {
-    title: 'Lineage | Rare Rabbit',
-    description: 'A luxury heritage timeline: founder story, manufacturing journey, and sustainability from Rare Rabbit.',
+    title: 'Lineage | Plasma Atelier',
+    description: 'A luxury heritage timeline: founder story, manufacturing journey, and sustainability from Plasma Atelier.',
     type: 'website',
   },
 };

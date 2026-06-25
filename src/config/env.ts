@@ -31,7 +31,7 @@ export const config: FrontendConfig = {
   environment,
   isDevelopment: environment === 'development',
   isProduction: environment === 'production',
-  appName: 'Rare Rabbit',
+  appName: 'Plasma Atelier',
 };
 
 // Validate on load

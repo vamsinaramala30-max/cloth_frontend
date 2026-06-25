@@ -185,7 +185,7 @@ export function TemplatesGallery() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                   <div className="text-cyan-200 text-sm font-bold uppercase tracking-widest">Hero</div>
-                  <div className="mt-2 text-white text-2xl font-light">RARE RAB IT</div>
+                  <div className="mt-2 text-white text-2xl font-light">Plasma Atelier</div>
                   <div className="mt-2 text-zinc-400 text-sm">Cinematic layout preview</div>
                   <div className="mt-4 h-32 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20" />
                 </div>

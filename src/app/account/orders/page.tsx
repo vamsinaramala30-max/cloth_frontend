@@ -285,7 +285,7 @@ function OrderCard({
         <div class="invoice-container">
           <div class="header">
             <div class="logo-container">
-              <h1>RARE RABBIT</h1>
+              <h1>Plasma Atelier</h1>
               <p>Futuristic Luxury Fashion</p>
             </div>
             <div class="invoice-title">
@@ -336,7 +336,7 @@ function OrderCard({
           </div>
 
           <div class="footer">
-            <p>Thank you for choosing RARE RABBIT.</p>
+            <p>Thank you for choosing Plasma Atelier.</p>
           </div>
         </div>
         <script>

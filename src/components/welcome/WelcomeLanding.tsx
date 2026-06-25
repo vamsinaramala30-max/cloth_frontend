@@ -378,7 +378,7 @@ export function WelcomeLanding() {
               {/* Glass caption overlay */}
               <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/70 via-black/25 to-transparent">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="text-white text-sm font-semibold">RARE RAB IT — Luxury Look</div>
+                  <div className="text-white text-sm font-semibold">Plasma Atelier — Luxury Look</div>
                   <div className="text-zinc-400 text-xs">Cinematic intro stream</div>
                 </div>
               </div>

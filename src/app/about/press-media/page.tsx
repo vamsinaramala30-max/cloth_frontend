@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Press & Media | RARE RAB IT',
+  title: 'Press & Media | Plasma Atelier',
   description:
-    'Latest press notes, editorial features, and brand media highlights from RARE RAB IT.',
+    'Latest press notes, editorial features, and brand media highlights from Plasma Atelier.',
   openGraph: {
-    title: 'Press & Media | RARE RAB IT',
+    title: 'Press & Media | Plasma Atelier',
     description:
-      'Latest press notes, editorial features, and brand media highlights from RARE RAB IT.',
+      'Latest press notes, editorial features, and brand media highlights from Plasma Atelier.',
     type: 'website',
   },
 };
@@ -20,7 +20,7 @@ export default function PressMediaPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        RARE RAB IT appears where fashion meets future-thinking—editorials,
+        Plasma Atelier appears where fashion meets future-thinking—editorials,
         interviews, and showcases built for audiences who value precision and
         originality.
       </p>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | RARE RAB IT',
+  title: 'Terms of Service | Plasma Atelier',
   description: 'Terms of Service',
 };
 

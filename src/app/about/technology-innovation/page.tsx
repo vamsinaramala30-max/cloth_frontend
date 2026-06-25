@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Technology & Innovation | RARE RAB IT',
+  title: 'Technology & Innovation | Plasma Atelier',
   description:
     'Explore how fashion-tech supports precision design, improved production workflows, and the future of luxury.',
   openGraph: {
-    title: 'Technology & Innovation | RARE RAB IT',
+    title: 'Technology & Innovation | Plasma Atelier',
     description:
       'Explore how fashion-tech supports precision design, improved production workflows, and the future of luxury.',
     type: 'website',

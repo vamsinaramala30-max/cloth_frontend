@@ -56,7 +56,7 @@ export default function LuxuryTemplatesRail() {
 
                 <div className="mt-5 h-[1px] w-full bg-gradient-to-r from-cyan-300/30 via-purple-300/20 to-transparent" />
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">RARE RAB IT</span>
+                  <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">Plasma Atelier</span>
                   <span className="inline-flex items-center gap-2 text-xs text-cyan-200">
                     <span className="inline-block h-1 w-1 rounded-full bg-cyan-300/80" />
                     Luxury-ready

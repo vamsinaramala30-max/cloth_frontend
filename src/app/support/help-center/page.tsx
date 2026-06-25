@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Help Center | RARE RAB IT',
+  title: 'Help Center | Plasma Atelier',
   description:
     'Find fast answers for orders, sizing, returns, and delivery. Designed for a premium customer experience.',
 };

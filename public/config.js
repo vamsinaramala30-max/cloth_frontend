@@ -1,5 +1,5 @@
 /**
- * RARE RABBIT GLOBAL FRONTEND ENVIRONMENT CONFIGURATION
+ * Plasma Atelier GLOBAL FRONTEND ENVIRONMENT CONFIGURATION
  * Decoupled client-side runtime values.
  */
 const ENV = {

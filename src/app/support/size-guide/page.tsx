@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Size Guide | RARE RAB IT',
+  title: 'Size Guide | Plasma Atelier',
   description:
     'Find the perfect fit. A premium size guide designed for luxury fashion comfort and silhouette accuracy.',
 };

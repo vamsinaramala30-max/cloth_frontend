@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Accessibility Statement | RARE RAB IT',
-  description: 'RARE RAB IT accessibility statement—our commitment to inclusive design.',
+  title: 'Accessibility Statement | Plasma Atelier',
+  description: 'Plasma Atelier accessibility statement—our commitment to inclusive design.',
 };
 
 export default function AccessibilityStatementPage() {
@@ -13,7 +13,7 @@ export default function AccessibilityStatementPage() {
       </h1>
 
       <p className="mt-6 text-zinc-400 leading-relaxed">
-        RARE RAB IT is committed to making our website accessible to all users,
+        Plasma Atelier is committed to making our website accessible to all users,
         including people with disabilities.
       </p>
 

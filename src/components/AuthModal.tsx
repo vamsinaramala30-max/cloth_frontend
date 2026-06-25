@@ -88,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {isLogin ? 'Welcome Back' : 'Join Us'}
                 </h2>
                 <p className="text-xs text-zinc-400 tracking-[0.2em]">
-                  {isLogin ? 'SIGN IN TO YOUR ACCOUNT' : 'CREATE YOUR RARE RABBIT ACCOUNT'}
+                  {isLogin ? 'SIGN IN TO YOUR ACCOUNT' : 'CREATE YOUR Plasma Atelier ACCOUNT'}
                 </p>
               </motion.div>
 

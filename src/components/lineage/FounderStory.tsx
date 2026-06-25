@@ -15,7 +15,7 @@ export function FounderStory() {
       <p className="text-xs md:text-sm text-cyan-300 tracking-[0.28em] uppercase">Founder story</p>
       <h2 className="mt-3 text-2xl md:text-3xl font-semibold tracking-tight">A vision built to outlast trends</h2>
       <p className="mt-4 text-zinc-300/90 leading-relaxed">
-        Rare Rabbit was created with one idea: luxury should feel intentional. Every collection begins with
+        Plasma Atelier was created with one idea: luxury should feel intentional. Every collection begins with
         a story—then becomes a system of craft. From fabric behavior to finishing details, our founder
         designed for longevity first.
       </p>

@@ -7,7 +7,7 @@ const AuthModalClient = dynamic(() => import('@/components/AuthModal').then(m =>
 });
 
 export const metadata: Metadata = {
-  title: 'Login | RARE RAB IT',
+  title: 'Login | Plasma Atelier',
   description: 'Sign in to your account',
 };
 

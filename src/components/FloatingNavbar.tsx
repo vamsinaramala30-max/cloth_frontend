@@ -47,8 +47,18 @@ export const FloatingNavbar: React.FC = () => {
       {/* ── Floating Bar ── */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-[100]"
-        initial={{ y: 0 }}
-        animate={{ y: 0 }}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{
+          y: isScrolled ? 0 : -100,
+          opacity: isScrolled ? 1 : 0,
+        }}
+        transition={{
+          duration: 0.4,
+          ease: 'easeOut',
+        }}
+        style={{
+          pointerEvents: isScrolled ? 'auto' : 'none',
+        }}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
           <motion.div
@@ -56,17 +66,17 @@ export const FloatingNavbar: React.FC = () => {
             animate={
               isScrolled
                 ? {
-                    backgroundColor: 'rgba(0,0,0,0.75)',
-                    backdropFilter: 'blur(24px)',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
-                  }
+                  backgroundColor: 'rgba(0,0,0,0.75)',
+                  backdropFilter: 'blur(24px)',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                }
                 : {
-                    backgroundColor: 'rgba(0,0,0,0.15)',
-                    backdropFilter: 'blur(8px)',
-                    borderColor: 'rgba(255,255,255,0.05)',
-                    boxShadow: 'none',
-                  }
+                  backgroundColor: 'rgba(0,0,0,0.15)',
+                  backdropFilter: 'blur(8px)',
+                  borderColor: 'rgba(255,255,255,0.05)',
+                  boxShadow: 'none',
+                }
             }
             style={{ border: '1px solid' }}
           >
@@ -80,11 +90,10 @@ export const FloatingNavbar: React.FC = () => {
               {NAVIGATION.map((item) => (
                 <Link key={item.href} href={item.href} aria-label={`Navigate to ${item.label}`}>
                   <motion.span
-                    className={`relative text-[11px] font-medium uppercase tracking-widest transition-colors ${
-                      isActive(item.href)
-                        ? 'text-white'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
+                    className={`relative text-[11px] font-medium uppercase tracking-widest transition-colors ${isActive(item.href)
+                      ? 'text-white'
+                      : 'text-zinc-400 hover:text-white'
+                      }`}
                     whileHover={{ y: -1 }}
                   >
                     {item.label}
@@ -144,8 +153,18 @@ export const FloatingNavbar: React.FC = () => {
               </button>
 
               {/* Account */}
-              <Link href={user ? '/account' : '/login'} aria-label={user ? 'Go to account' : 'Sign in'}>
-                <User className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
+              <Link
+                href={user ? '/account' : '/login'}
+                aria-label={user ? 'Go to account' : 'Sign in'}
+                className="flex items-center"
+              >
+                {user ? (
+                  <User className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
+                ) : (
+                  <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">
+                    Sign In
+                  </span>
+                )}
               </Link>
 
               {/* Hamburger (mobile) */}
@@ -374,11 +393,10 @@ export const FloatingNavbar: React.FC = () => {
                       <Link
                         href={item.href}
                         onClick={closeMenu}
-                        className={`flex items-center py-3.5 px-4 rounded-xl text-sm font-medium uppercase tracking-widest transition-all ${
-                          isActive(item.href)
-                            ? 'bg-white/10 text-white'
-                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        className={`flex items-center py-3.5 px-4 rounded-xl text-sm font-medium uppercase tracking-widest transition-all ${isActive(item.href)
+                          ? 'bg-white/10 text-white'
+                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                          }`}
                       >
                         {item.label}
                       </Link>

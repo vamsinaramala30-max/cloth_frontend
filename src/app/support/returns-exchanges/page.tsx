@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Returns & Exchanges | RARE RAB IT',
+  title: 'Returns & Exchanges | Plasma Atelier',
   description:
-    'Return eligibility, process, refund timelines, and exchange policy for RARE RAB IT.',
+    'Return eligibility, process, refund timelines, and exchange policy for Plasma Atelier.',
 };
 
 export default function ReturnsExchangesPage() {

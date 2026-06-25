@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { MagazineClient } from '@/components/magazine/MagazineClient';
 
 export const metadata: Metadata = {
-  title: 'Magazine | Rare Rabbit',
-  description: 'Editorial fashion articles, style guides, and featured collections from Rare Rabbit.',
-  keywords: ['rare rabbit', 'fashion magazine', 'style guide', 'editorial', 'luxury fashion'],
+  title: 'Magazine | Plasma Atelier',
+  description: 'Editorial fashion articles, style guides, and featured collections from Plasma Atelier.',
+  keywords: ['Plasma Atelier', 'fashion magazine', 'style guide', 'editorial', 'luxury fashion'],
   openGraph: {
-    title: 'Magazine | Rare Rabbit',
-    description: 'Editorial fashion articles, style guides, and featured collections from Rare Rabbit.',
+    title: 'Magazine | Plasma Atelier',
+    description: 'Editorial fashion articles, style guides, and featured collections from Plasma Atelier.',
     type: 'website',
   },
 };

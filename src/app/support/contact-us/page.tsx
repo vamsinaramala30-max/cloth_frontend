@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | RARE RAB IT',
-  description: 'Send a message to RARE RAB IT support. We respond with premium guidance for your order and questions.',
+  title: 'Contact Us | Plasma Atelier',
+  description: 'Send a message to Plasma Atelier support. We respond with premium guidance for your order and questions.',
 };
 
 export default function ContactUsPage() {

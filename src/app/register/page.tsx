@@ -4,7 +4,7 @@ import LuxuryAuthCard from '@/components/auth/LuxuryAuthCard';
 import { LuxuryAuthBackground } from '@/components/auth/LuxuryAuthBackground';
 
 export const metadata: Metadata = {
-  title: 'Register | RARE RAB IT',
+  title: 'Register | Plasma Atelier',
   description: 'Create your account',
 };
 
