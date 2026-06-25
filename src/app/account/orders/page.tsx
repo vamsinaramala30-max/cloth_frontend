@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Package,
   Download,
@@ -405,12 +406,17 @@ function OrderCard({
               className="flex gap-3 items-center shrink-0 border border-white/5 p-2 bg-white/[0.01] rounded-xl min-w-[200px]"
             >
               {item.image ? (
-                <img
-                  src={item.image}
-                  className="h-12 w-9 object-cover border border-white/10 shrink-0 rounded"
-                  alt={item.name}
-                />
+                <div className="h-12 w-9 relative shrink-0 rounded overflow-hidden border border-white/10">
+                  <Image
+                    src={item.image}
+                    alt={item.name || 'Product'}
+                    fill
+                    sizes="36px"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
+
                 <div className="h-12 w-9 bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0 rounded">
                   <Package className="h-4 w-4 text-zinc-600" />
                 </div>
@@ -457,12 +463,17 @@ function OrderCard({
                   {items.map((item, i) => (
                     <div key={i} className="flex gap-4 items-center">
                       {item.image && (
-                        <img
-                          src={item.image}
-                          className="h-16 w-12 object-cover border border-white/10 shrink-0 rounded"
-                          alt={item.name}
-                        />
+                        <div className="h-16 w-12 relative shrink-0 rounded overflow-hidden border border-white/10">
+                          <Image
+                            src={item.image}
+                            alt={item.name || 'Product'}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        </div>
                       )}
+
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-white truncate">{item.name}</p>
                         <p className="text-[10px] text-zinc-400 mt-1">
