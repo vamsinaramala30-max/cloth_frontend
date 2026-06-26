@@ -18,7 +18,6 @@ export const useAuthActions = () => {
           setError(response.error);
           return false;
         }
-
         setError(null);
         return true;
       } catch (err) {
@@ -67,8 +66,6 @@ export const useAuthActions = () => {
     try {
       await api.logout();
       clearAuth();
-    } catch (err) {
-      console.error('Logout error:', err);
     } finally {
       setLoading(false);
     }
@@ -81,8 +78,6 @@ export const useAuthActions = () => {
       if (response.data?.user) {
         setUser(response.data.user);
       }
-    } catch (err) {
-      console.error('Fetch user error:', err);
     } finally {
       setLoading(false);
     }

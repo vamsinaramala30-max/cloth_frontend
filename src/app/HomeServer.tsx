@@ -9,9 +9,31 @@ import { ThreeProductScene } from '@/components/ThreeProductScene';
 import { FeaturedCollections } from '@/components/FeaturedCollections';
 import { CircularCategories } from '@/components/CircularCategories';
 import HomeProductsClient from './HomeProductsClient';
+import { fetchCollections } from '@/lib/api';
+import { IMAGE_MAP } from '@/lib/images';
 
+async function getHomepageCollections() {
+  try {
+    const response = await fetchCollections();
+    if (response.data?.data && response.data.data.length > 0) {
+      return response.data.data.slice(0, 3).map((c) => ({
+        id: c.id || c._id || c.slug,
+        title: c.title,
+        description: c.description,
+        image: c.bannerImage || c.image || IMAGE_MAP.collection,
+        color: c.accentColor || 'from-cyan-500 to-purple-600',
+        slug: c.slug,
+      }));
+    }
+  } catch {
+    // Silently fail — component will show neutral skeleton slides
+  }
+  return [];
+}
 
-export default function HomeServer() {
+export default async function HomeServer() {
+  const collections = await getHomepageCollections();
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent">
       <HeroSection />
@@ -36,19 +58,18 @@ export default function HomeServer() {
       {/* Scroll Story Section */}
       <ScrollStorySection />
 
-      {/* Featured Collections */}
-      <FeaturedCollections />
+      {/* Featured Collections — populated from backend */}
+      <FeaturedCollections collections={collections} />
 
       {/* Circular Categories */}
       <CircularCategories />
 
-      {/* New Arrivals Section (hydrated client-side, but hero + everything above is SSR) */}
+      {/* New Arrivals Section (hydrated client-side) */}
       <HomeProductsClient />
 
       {/* Promotional Banner */}
       <section className="relative w-full py-16 md:py-20 px-4 md:px-8 z-20">
         <div className="max-w-7xl mx-auto">
-          {/* Kept as-is (animated via framer-motion within client sections if needed downstream) */}
           <div className="relative overflow-hidden rounded-2xl p-8 md:p-16">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-3xl" />
             <div className="absolute inset-0 rounded-2xl border-2 border-gradient-to-r from-cyan-400 to-purple-400 opacity-60" />
@@ -77,4 +98,3 @@ export default function HomeServer() {
     </div>
   );
 }
-

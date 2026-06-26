@@ -61,6 +61,8 @@ interface EmptyStateProps {
   href?: string;
   actionLabel?: string;
   onAction?: () => void;
+  // onClick is an alias for onAction (kept for call-site compatibility)
+  onClick?: () => void;
 }
 
 export function EmptyState({
@@ -72,7 +74,9 @@ export function EmptyState({
   href,
   actionLabel,
   onAction,
+  onClick,
 }: EmptyStateProps) {
+  const resolvedAction = onAction || onClick;
   const preset = presets[variant];
   const Icon = icon || preset.icon;
   const displayTitle = title || preset.title;
@@ -101,9 +105,9 @@ export function EmptyState({
         {displayMessage}
       </p>
 
-      {onAction ? (
+      {resolvedAction ? (
         <motion.button
-          onClick={onAction}
+          onClick={resolvedAction}
           className="px-8 py-3 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold tracking-widest uppercase rounded-xl text-sm hover:shadow-lg hover:shadow-cyan-400/20 transition-all"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}

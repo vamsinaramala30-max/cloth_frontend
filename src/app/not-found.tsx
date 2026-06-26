@@ -54,13 +54,13 @@ export default function NotFound() {
             </motion.button>
           </Link>
 
-          <Link href="/shop">
+          <Link href="/products">
             <motion.button
               className="px-8 py-3 border-2 border-cyan-400 text-cyan-400 font-bold tracking-widest uppercase rounded-lg hover:bg-cyan-400/10 transition-all"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Shop Now
+              Browse Catalog
             </motion.button>
           </Link>
         </motion.div>

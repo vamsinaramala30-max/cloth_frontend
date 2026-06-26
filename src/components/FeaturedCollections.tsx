@@ -1,74 +1,61 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
+import Link from 'next/link';
 import { IMAGE_MAP } from '../lib/images';
-import SafeImage from './SafeImage';
 
-interface FeaturedCollectionsProps {
-  collections?: Array<{
-    id: number;
-    title: string;
-    description: string;
-    image: string;
-    color: string;
-  }>;
+interface CollectionSlide {
+  id: string | number;
+  title: string;
+  description: string;
+  image: string;
+  color: string;
+  slug?: string;
 }
 
-const defaultCollections = [
-  {
-    id: 1,
-    title: 'Neural Silk',
-    description: 'AI-Generated Aesthetic',
-    image: IMAGE_MAP.collection,
-    color: 'from-cyan-500 to-blue-600',
-  },
-  {
-    id: 2,
-    title: 'Quantum Weave',
-    description: 'Futuristic Textiles',
-    image: IMAGE_MAP.runway,
-    color: 'from-purple-500 to-pink-600',
-  },
-  {
-    id: 3,
-    title: 'Ethereal Form',
-    description: 'Luxury Minimalism',
-    image: IMAGE_MAP.hero,
-    color: 'from-amber-400 to-orange-600',
-  },
-];
+interface FeaturedCollectionsProps {
+  collections?: CollectionSlide[];
+}
 
-export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
-  collections = defaultCollections,
-}) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>();
+export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections = [] }) => {
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [autoplay, setAutoplay] = React.useState(true);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Use placeholder slides when no real data is available yet (skeleton state)
+  const slides: CollectionSlide[] = collections.length > 0
+    ? collections
+    : [
+      { id: 1, title: '—', description: 'Loading collections…', image: IMAGE_MAP.collection, color: 'from-zinc-700 to-zinc-800' },
+      { id: 2, title: '—', description: '—', image: IMAGE_MAP.runway, color: 'from-zinc-700 to-zinc-800' },
+      { id: 3, title: '—', description: '—', image: IMAGE_MAP.hero, color: 'from-zinc-700 to-zinc-800' },
+    ];
 
   useEffect(() => {
-    if (!autoplay) return;
+    if (!autoplay || slides.length <= 1) return;
 
     timeoutRef.current = setTimeout(() => {
-      setActiveIndex((prev) => (prev + 1) % collections.length);
+      setActiveIndex((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [activeIndex, autoplay, collections.length]);
+  }, [activeIndex, autoplay, slides.length]);
 
   const next = () => {
-    setActiveIndex((prev) => (prev + 1) % collections.length);
+    setActiveIndex((prev) => (prev + 1) % slides.length);
     setAutoplay(false);
   };
 
   const prev = () => {
-    setActiveIndex((prev) => (prev - 1 + collections.length) % collections.length);
+    setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
     setAutoplay(false);
   };
 
-  const active = collections[activeIndex];
+  const active = slides[activeIndex];
 
   return (
     <section
@@ -104,15 +91,14 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
               transition={{ duration: 0.8 }}
             >
               {/* Background Image */}
-              <SafeImage
+              <Image
                 src={active?.image}
                 alt={active?.title ?? 'Featured collection'}
                 fill
                 className="object-cover"
-                // Carousel LCP should be limited; only mark the first view as priority.
                 priority={activeIndex === 0}
                 loading={activeIndex === 0 ? 'eager' : 'lazy'}
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 768px) 100vw, 80vw"
               />
 
               {/* Overlay */}
@@ -138,16 +124,23 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
                   {active.description}
                 </motion.p>
 
-                <motion.button
-                  className="px-6 md:px-8 py-2 md:py-3 border border-white text-white text-xs font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  View Collection
-                </motion.button>
+                {active.slug && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <Link href={`/collections/${active.slug}`}>
+                      <motion.button
+                        className="px-6 md:px-8 py-2 md:py-3 border border-white text-white text-xs font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        View Collection
+                      </motion.button>
+                    </Link>
+                  </motion.div>
+                )}
               </div>
 
               {/* Glow Border */}
@@ -169,23 +162,22 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
           <div className="flex items-center justify-between mt-8">
             {/* Thumbnails */}
             <div className="flex gap-3 md:gap-4">
-              {collections.map((collection, index) => (
+              {slides.map((slide, index) => (
                 <motion.button
-                  key={collection.id}
+                  key={slide.id}
                   className={`relative w-16 h-16 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                    activeIndex === index
-                      ? 'border-cyan-400'
-                      : 'border-white/20'
+                    activeIndex === index ? 'border-cyan-400' : 'border-white/20'
                   }`}
                   onClick={() => {
                     setActiveIndex(index);
                     setAutoplay(false);
                   }}
                   whileHover={{ scale: 1.05 }}
+                  aria-label={`View ${slide.title}`}
                 >
-                  <SafeImage
-                    src={collection.image}
-                    alt={collection.title}
+                  <Image
+                    src={slide.image}
+                    alt={slide.title}
                     fill
                     className="object-cover"
                     loading="lazy"
@@ -205,23 +197,19 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
             {/* Control Buttons */}
             <div className="flex gap-4">
               <motion.button
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300 group"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300"
                 onClick={prev}
-                whileHover={{
-                  scale: 1.1,
-                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                }}
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 217, 255, 0.1)' }}
+                aria-label="Previous collection"
               >
                 <span className="text-xl">←</span>
               </motion.button>
 
               <motion.button
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300 group"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/30 hover:border-cyan-400 flex items-center justify-center text-white hover:text-cyan-400 transition-all duration-300"
                 onClick={next}
-                whileHover={{
-                  scale: 1.1,
-                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                }}
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 217, 255, 0.1)' }}
+                aria-label="Next collection"
               >
                 <span className="text-xl">→</span>
               </motion.button>
@@ -230,13 +218,12 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
 
           {/* Progress Indicator */}
           <div className="flex gap-1.5 mt-8">
-            {collections.map((_, index) => (
+            {slides.map((_, index) => (
               <motion.div
                 key={index}
                 className="h-1 bg-white/20 rounded-full flex-1"
                 animate={{
-                  backgroundColor:
-                    activeIndex === index ? '#00d9ff' : 'rgba(255, 255, 255, 0.2)',
+                  backgroundColor: activeIndex === index ? '#00d9ff' : 'rgba(255, 255, 255, 0.2)',
                 }}
                 transition={{ duration: 0.3 }}
               />
@@ -247,4 +234,3 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
     </section>
   );
 };
-

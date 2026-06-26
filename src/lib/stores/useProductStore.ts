@@ -1,49 +1,102 @@
 import { create } from 'zustand';
-import type { Product, Collection } from '@/types';
+import type { Product, Collection, Pagination } from '@/types';
+import * as api from '@/lib/api';
 
 interface ProductState {
+  // Products
   products: Product[];
-  collections: Collection[];
-  vaultProducts: Product[];
   featuredProducts: Product[];
+  productPagination: Pagination | null;
+  isLoadingProducts: boolean;
+  productsError: string | null;
+
+  // Collections
+  collections: Collection[];
+  isLoadingCollections: boolean;
+  collectionsError: string | null;
+
+  // Filters derived from API
   filters: {
     categories: string[];
     collections: string[];
     tags: string[];
   };
-  isLoading: boolean;
-  error: string | null;
 
   // Actions
-  setProducts: (products: Product[]) => void;
-  setCollections: (collections: Collection[]) => void;
-  setVaultProducts: (products: Product[]) => void;
-  setFeaturedProducts: (products: Product[]) => void;
+  fetchProducts: (params?: {
+    category?: string;
+    collection?: string;
+    sort?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
+
+  fetchCollections: () => Promise<void>;
   setFilters: (filters: { categories: string[]; collections: string[]; tags: string[] }) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
 
   // Helpers
   getProductsByCollection: (slug: string) => Product[];
   getProductBySlug: (slug: string) => Product | undefined;
+  getCollectionBySlug: (slug: string) => Collection | undefined;
 }
 
 export const useProductStore = create<ProductState>()((set, get) => ({
   products: [],
-  collections: [],
-  vaultProducts: [],
   featuredProducts: [],
-  filters: { categories: [], collections: [], tags: [] },
-  isLoading: false,
-  error: null,
+  productPagination: null,
+  isLoadingProducts: false,
+  productsError: null,
 
-  setProducts: (products) => set({ products }),
-  setCollections: (collections) => set({ collections }),
-  setVaultProducts: (vaultProducts) => set({ vaultProducts }),
-  setFeaturedProducts: (featuredProducts) => set({ featuredProducts }),
+  collections: [],
+  isLoadingCollections: false,
+  collectionsError: null,
+
+  filters: { categories: [], collections: [], tags: [] },
+
+  fetchProducts: async (params = {}) => {
+    set({ isLoadingProducts: true, productsError: null });
+    try {
+      const response = await api.fetchProducts(params);
+      if (response.error) {
+        set({ productsError: response.error });
+        return;
+      }
+      const data = response.data;
+      if (data) {
+        const products = data.data ?? [];
+        set({
+          products,
+          featuredProducts: products.filter((p) => p.isFeatured),
+          productPagination: data.pagination ?? null,
+          productsError: null,
+        });
+      }
+    } catch (err) {
+      set({ productsError: err instanceof Error ? err.message : 'Failed to load products' });
+    } finally {
+      set({ isLoadingProducts: false });
+    }
+  },
+
+  fetchCollections: async () => {
+    set({ isLoadingCollections: true, collectionsError: null });
+    try {
+      const response = await api.fetchCollections();
+      if (response.error) {
+        set({ collectionsError: response.error });
+        return;
+      }
+      const collections = response.data?.data ?? [];
+      set({ collections, collectionsError: null });
+    } catch (err) {
+      set({ collectionsError: err instanceof Error ? err.message : 'Failed to load collections' });
+    } finally {
+      set({ isLoadingCollections: false });
+    }
+  },
+
   setFilters: (filters) => set({ filters }),
-  setLoading: (isLoading) => set({ isLoading }),
-  setError: (error) => set({ error }),
 
   getProductsByCollection: (slug) =>
     get().products.filter(
@@ -52,6 +105,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         (Array.isArray(p.collections) && p.collections.includes(slug))
     ),
 
-  getProductBySlug: (slug) =>
-    get().products.find((p) => p.slug === slug),
+  getProductBySlug: (slug) => get().products.find((p) => p.slug === slug),
+
+  getCollectionBySlug: (slug) => get().collections.find((c) => c.slug === slug),
 }));

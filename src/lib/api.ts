@@ -1,6 +1,6 @@
 // API Configuration
 import config from '@/config/env';
-import { CartItem, OrderHistoryItem } from '@/types';
+import type { CartItem, OrderHistoryItem, Product, Collection, User } from '@/types';
 
 const API_BASE_URL = config.apiUrl;
 
@@ -8,7 +8,13 @@ export const API_ENDPOINTS = {
   // Products
   PRODUCTS: `${API_BASE_URL}/products`,
   PRODUCT_DETAIL: (id: string) => `${API_BASE_URL}/products/${id}`,
+  PRODUCT_BY_SLUG: (slug: string) => `${API_BASE_URL}/products/slug/${slug}`,
   FILTERS: `${API_BASE_URL}/products/filters`,
+
+  // Collections
+  COLLECTIONS: `${API_BASE_URL}/collections`,
+  COLLECTION_DETAIL: (slug: string) => `${API_BASE_URL}/collections/${slug}`,
+  COLLECTION_PRODUCTS: (slug: string) => `${API_BASE_URL}/collections/${slug}/products`,
 
   // Auth
   LOGIN: `${API_BASE_URL}/auth/login`,
@@ -22,7 +28,7 @@ export const API_ENDPOINTS = {
 
   // Cart
   CART: `${API_BASE_URL}/cart`,
-  CART_ITEMS: `${API_BASE_URL}/cart/items`,
+  CART_ITEM: (itemId: string) => `${API_BASE_URL}/cart/${itemId}`,
 
   // Wishlist
   WISHLIST: `${API_BASE_URL}/wishlist`,
@@ -30,6 +36,7 @@ export const API_ENDPOINTS = {
   // Orders
   ORDERS: `${API_BASE_URL}/orders`,
   ORDER_DETAIL: (id: string) => `${API_BASE_URL}/orders/${id}`,
+  ORDER_HISTORY: `${API_BASE_URL}/orders/history`,
 
   // Payments
   PAYMENT: `${API_BASE_URL}/payments`,
@@ -39,34 +46,12 @@ export const API_ENDPOINTS = {
   // Reviews
   PRODUCT_REVIEWS: (id: string) => `${API_BASE_URL}/products/${id}/reviews`,
   PRODUCT_RATINGS: (id: string) => `${API_BASE_URL}/products/${id}/ratings`,
+
+  // Search
+  SEARCH: `${API_BASE_URL}/search`,
 };
 
-
-export type ProductVariant = {
-  sku: string;
-  color: string;
-  colorName: string;
-  size: string;
-  stock: number;
-  images: string[];
-};
-
-export type Product = {
-  _id: string;
-  name: string;
-  slug: string;
-  description: string;
-  basePrice: number;
-  salePrice?: number;
-  category: string;
-  collections: string[];
-  tags: string[];
-  variants: ProductVariant[];
-  averageRating: number;
-  isFeatured: boolean;
-  isActive: boolean;
-  reviews?: Array<{ rating: number }>;
-};
+// ── Response Types ────────────────────────────────────────────────────────────
 
 export type ProductListResponse = {
   success: boolean;
@@ -79,21 +64,39 @@ export type ProductDetailsResponse = {
   data: Product;
 };
 
-export type FilterResponse = {
+export type CollectionListResponse = {
   success: boolean;
-  data: { categories: string[]; collections: string[] };
+  data: Collection[];
 };
 
-export type User = {
-  _id: string;
-  id?: string;
-  name: string;
-  email: string;
-  role: 'customer' | 'admin' | 'superadmin';
-  isVerified: boolean;
-  wishlist: string[];
-  addresses: Array<{ label: string; street: string; city: string; country: string }>;
-  phone?: string;
+export type CollectionDetailResponse = {
+  success: boolean;
+  data: Collection & { products?: Product[] };
+};
+
+export type FilterResponse = {
+  success: boolean;
+  data: { 
+    categories: string[]; 
+    collections: string[];
+    colors?: string[];
+    sizes?: string[];
+  };
+};
+
+export type LoginResponseData = {
+  user: User;
+  token: string;
+};
+
+export type CartResponse = {
+  data: {
+    items: CartItem[];
+  };
+};
+
+export type OrderHistoryResponse = {
+  data?: { data?: OrderHistoryItem[] } | OrderHistoryItem[];
 };
 
 export type OtpSendPayload = {
@@ -115,9 +118,32 @@ export type OtpResponse = {
   user?: { name: string; email: string; role: 'customer' | 'admin' | 'superadmin' };
 };
 
-// Fetch wrapper with error handling
-export async function fetchAPI<T>(
+export type StripeIntentResponse = {
+  clientSecret: string;
+  orderId: string;
+};
 
+export type RazorpayOrderResponse = {
+  id: string;
+  amount: number;
+  currency: string;
+  orderId: string;
+};
+
+export type SearchResponse = {
+  success: boolean;
+  data: {
+    products: Product[];
+    collections: Collection[];
+  };
+};
+
+// Re-export User from types for backwards compat
+export type { User } from '@/types';
+
+// ── Core Fetch Wrapper ────────────────────────────────────────────────────────
+
+export async function fetchAPI<T>(
   url: string,
   options?: RequestInit
 ): Promise<{ data?: T; error?: string }> {
@@ -133,7 +159,7 @@ export async function fetchAPI<T>(
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => null);
-      return { error: errorBody?.message || 'An error occurred' };
+      return { error: errorBody?.message || `HTTP ${response.status}` };
     }
 
     const data = await response.json();
@@ -143,7 +169,8 @@ export async function fetchAPI<T>(
   }
 }
 
-// Product APIs
+// ── Product APIs ──────────────────────────────────────────────────────────────
+
 export async function fetchProducts(params: {
   category?: string;
   collection?: string;
@@ -151,36 +178,76 @@ export async function fetchProducts(params: {
   search?: string;
   page?: number;
   limit?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  color?: string;
+  size?: string;
+  availability?: string;
+  featured?: boolean;
+  newArrivals?: boolean;
+  bestSellers?: boolean;
 }) {
-  const url = new URL(API_ENDPOINTS.PRODUCTS);
+  const query = new URLSearchParams();
+  if (params.category && params.category !== 'All Items' && params.category !== 'All') {
+    query.set('category', params.category);
+  }
+  if (params.collection && params.collection !== 'All') query.set('collection', params.collection);
+  if (params.sort) query.set('sort', params.sort);
+  if (params.search) query.set('search', params.search);
+  if (params.page) query.set('page', String(params.page));
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.minPrice !== undefined) query.set('minPrice', String(params.minPrice));
+  if (params.maxPrice !== undefined) query.set('maxPrice', String(params.maxPrice));
+  if (params.color) query.set('color', params.color);
+  if (params.size) query.set('size', params.size);
+  if (params.availability) query.set('availability', params.availability);
+  if (params.featured !== undefined) query.set('featured', String(params.featured));
+  if (params.newArrivals !== undefined) query.set('newArrivals', String(params.newArrivals));
+  if (params.bestSellers !== undefined) query.set('bestSellers', String(params.bestSellers));
 
-  if (params.category) url.searchParams.set('category', params.category);
-  if (params.collection) url.searchParams.set('collection', params.collection);
-  if (params.sort) url.searchParams.set('sort', params.sort);
-  if (params.search) url.searchParams.set('search', params.search);
-  if (params.page) url.searchParams.set('page', String(params.page));
-  if (params.limit) url.searchParams.set('limit', String(params.limit));
-
-  const response = await fetchAPI<ProductListResponse>(url.toString());
-  return response;
+  const url = `${API_ENDPOINTS.PRODUCTS}${query.toString() ? `?${query}` : ''}`;
+  return fetchAPI<ProductListResponse>(url);
 }
 
 export async function fetchProductDetail(id: string) {
-  const response = await fetchAPI<ProductDetailsResponse>(API_ENDPOINTS.PRODUCT_DETAIL(id));
-  return response;
+  return fetchAPI<ProductDetailsResponse>(API_ENDPOINTS.PRODUCT_DETAIL(id));
+}
+
+export async function fetchProductBySlug(slug: string) {
+  return fetchAPI<ProductDetailsResponse>(API_ENDPOINTS.PRODUCT_BY_SLUG(slug));
 }
 
 export async function fetchFilters() {
-  const response = await fetchAPI<FilterResponse>(API_ENDPOINTS.FILTERS);
-  return response;
+  return fetchAPI<FilterResponse>(API_ENDPOINTS.FILTERS);
 }
 
-export type LoginResponseData = {
-  user: User;
-  token: string;
-};
+// ── Collection APIs ───────────────────────────────────────────────────────────
 
-// Auth APIs
+export async function fetchCollections() {
+  return fetchAPI<CollectionListResponse>(API_ENDPOINTS.COLLECTIONS);
+}
+
+export async function fetchCollectionBySlug(slug: string) {
+  return fetchAPI<CollectionDetailResponse>(API_ENDPOINTS.COLLECTION_DETAIL(slug));
+}
+
+export async function fetchCollectionProducts(slug: string, params?: { sort?: string; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params?.sort) query.set('sort', params.sort);
+  if (params?.limit) query.set('limit', String(params.limit));
+  const url = `${API_ENDPOINTS.COLLECTION_PRODUCTS(slug)}${query.toString() ? `?${query}` : ''}`;
+  return fetchAPI<ProductListResponse>(url);
+}
+
+// ── Search API ────────────────────────────────────────────────────────────────
+
+export async function searchAll(query: string) {
+  const url = `${API_ENDPOINTS.SEARCH}?q=${encodeURIComponent(query)}`;
+  return fetchAPI<SearchResponse>(url);
+}
+
+// ── Auth APIs ─────────────────────────────────────────────────────────────────
+
 export async function register(email: string, password: string, name: string) {
   return fetchAPI(API_ENDPOINTS.REGISTER, {
     method: 'POST',
@@ -200,16 +267,18 @@ export async function logout() {
 }
 
 export async function getMe() {
-  return fetchAPI<{ user: User }>(API_ENDPOINTS.ME);
+  return fetchAPI<{ user: import('@/types').User }>(API_ENDPOINTS.ME);
 }
 
-export type CartResponse = {
-  data: {
-    items: CartItem[];
-  };
-};
+export async function updateProfile(payload: { name: string; phone?: string }) {
+  return fetchAPI<{ data: import('@/types').User }>(API_ENDPOINTS.ME, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
 
-// Cart APIs
+// ── Cart APIs ─────────────────────────────────────────────────────────────────
+
 export async function addToCart(productId: string, variantSku: string, quantity: number, size: string, color: string) {
   return fetchAPI(API_ENDPOINTS.CART, {
     method: 'POST',
@@ -222,27 +291,22 @@ export async function getCart() {
 }
 
 export async function updateCartItem(itemId: string, quantity: number) {
-  return fetchAPI(`${API_ENDPOINTS.CART}/${itemId}`, {
+  return fetchAPI(API_ENDPOINTS.CART_ITEM(itemId), {
     method: 'PATCH',
     body: JSON.stringify({ quantity }),
   });
+}
+
+export async function removeCartItem(itemId: string) {
+  return fetchAPI(API_ENDPOINTS.CART_ITEM(itemId), { method: 'DELETE' });
 }
 
 export async function clearCart() {
   return fetchAPI(API_ENDPOINTS.CART, { method: 'DELETE' });
 }
 
-// Orders
-export type OrderHistoryResponse = {
-  data?: { data?: OrderHistoryItem[] } | OrderHistoryItem[];
-};
+// ── Wishlist APIs ─────────────────────────────────────────────────────────────
 
-// Orders APIs
-export async function fetchOrderHistory() {
-  return fetchAPI<OrderHistoryResponse>(API_ENDPOINTS.ORDERS + '/history', { method: 'GET' });
-}
-
-// Wishlist APIs
 export async function addToWishlist(productId: string) {
   return fetchAPI(API_ENDPOINTS.WISHLIST, {
     method: 'POST',
@@ -261,7 +325,14 @@ export async function getWishlist() {
   return fetchAPI<{ data: Product[] }>(API_ENDPOINTS.WISHLIST);
 }
 
-// OTP APIs
+// ── Order APIs ────────────────────────────────────────────────────────────────
+
+export async function fetchOrderHistory() {
+  return fetchAPI<OrderHistoryResponse>(API_ENDPOINTS.ORDER_HISTORY, { method: 'GET' });
+}
+
+// ── OTP APIs ──────────────────────────────────────────────────────────────────
+
 export async function sendOtp(payload: OtpSendPayload) {
   return fetchAPI<OtpResponse>(API_ENDPOINTS.OTP_SEND, {
     method: 'POST',
@@ -272,13 +343,6 @@ export async function sendOtp(payload: OtpSendPayload) {
 export async function verifyOtp(payload: OtpVerifyPayload) {
   return fetchAPI<OtpResponse>(API_ENDPOINTS.OTP_VERIFY, {
     method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateProfile(payload: { name: string; phone?: string }) {
-  return fetchAPI<{ data: User }>(API_ENDPOINTS.ME, {
-    method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }

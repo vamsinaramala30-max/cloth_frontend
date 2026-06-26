@@ -4,9 +4,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { IMAGE_MAP } from '../lib/images';
-import RobustImage from './RobustImage';
+import ManagedImage from './ManagedImage';
+
+import { useAuthStore } from '@/hooks/useAuth';
 
 export const FloatingEditorialSection: React.FC = () => {
+  const { user } = useAuthStore();
+  if (user) return null;
+
   return (
     <motion.section
       className="relative z-10 w-full max-w-7xl mx-auto -mt-36 mb-24 px-4 md:px-8"
@@ -17,7 +22,7 @@ export const FloatingEditorialSection: React.FC = () => {
       <div className="relative w-full h-[600px] rounded-3xl overflow-hidden border border-white/10 bg-black/20 backdrop-blur-2xl shadow-2xl shadow-cyan-500/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(0,217,255,0.1),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(179,102,255,0.1),_transparent_28%)]" />
 
-        <RobustImage
+        <ManagedImage
           src={IMAGE_MAP.editorial}
           fallbackSrc={IMAGE_MAP.placeholder}
           alt="Plasma Atelier Editorial"

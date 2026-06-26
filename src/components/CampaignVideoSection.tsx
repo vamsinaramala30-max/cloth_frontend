@@ -57,7 +57,7 @@ export const CampaignVideoSection: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.5 }}
           >
-            <Link href="/shop">
+            <Link href="/products">
               <motion.div
                 className="px-8 py-3 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold text-xs uppercase tracking-[0.3em] shadow-2xl shadow-cyan-500/20 cursor-pointer"
                 whileHover={{ scale: 1.05 }}

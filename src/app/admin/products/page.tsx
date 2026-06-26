@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import config from '@/config/env';
-import { type Product } from '@/lib/api';
+import { type Product } from '@/types';
 
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_API_TOKEN || '';
 
@@ -85,7 +85,7 @@ export default function AdminProductsPage() {
           ) : (
             <div className="divide-y divide-white/10">
               {rows.map((p) => {
-                const price = (p.salePrice ?? p.basePrice) as number;
+                const price = (p.salePrice ?? p.basePrice ?? p.price) as number;
                 return (
                   <div
                     key={p._id}

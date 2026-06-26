@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // ── Product ──────────────────────────────────────────────────────────────────
 export interface ProductVariant {
   sku: string;
@@ -40,7 +38,7 @@ export interface Product {
   isActive?: boolean;
   inStock?: boolean;
   averageRating?: number;
-  reviews?: number | Array<{ rating: number }>;
+  reviews?: Array<{ rating: number; count?: number }>;
   sizes?: string[];
   colors?: string[];
   variants?: ProductVariant[];
@@ -51,8 +49,10 @@ export interface Product {
 // ── Collection ────────────────────────────────────────────────────────────────
 export interface Collection {
   id: string;
+  _id?: string;
   slug: string;
   title: string;
+  name?: string;
   description: string;
   longDescription?: string;
   image: string;
@@ -95,16 +95,33 @@ export interface WishlistItem {
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────
+export interface OrderLineItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+  image?: string;
+}
+
+export interface OrderFinancials {
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  total: number;
+}
+
 export interface Order {
-  _id: any;
-  orderId: any;
-  orderStatus: string;
-  financials: any;
   id: string;
+  _id: string;
+  orderId?: string;
   userId: string;
-  items: CartItem[];
+  items: OrderLineItem[];
+  financials: OrderFinancials;
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  orderStatus?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
@@ -114,11 +131,11 @@ export interface OrderHistoryItem {
   orderId?: string;
   orderStatus?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total?: number;
-  financials?: { total?: number };
+  financials?: OrderFinancials;
   trackingNumber?: string;
   estimatedDelivery?: string;
   courier?: string;
-  items?: CartItem[];
+  items?: OrderLineItem[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -146,4 +163,20 @@ export interface ToastMessage {
   type: ToastType;
   title: string;
   message?: string;
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+export interface Pagination {
+  total: number;
+  page: number;
+  pages: number;
+  limit?: number;
+}
+
+// ── API Response ──────────────────────────────────────────────────────────────
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  pagination?: Pagination;
 }

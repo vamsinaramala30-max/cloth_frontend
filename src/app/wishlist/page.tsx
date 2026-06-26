@@ -1,15 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWishlistStore } from '@/lib/stores/useWishlistStore';
+import { useAuthStore } from '@/hooks/useAuth';
 import { ProductCard } from '@/components/ProductCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function WishlistPage() {
-  const { items } = useWishlistStore();
+  const { items, syncFromBackend, isLoading } = useWishlistStore();
+  const { user } = useAuthStore();
 
-  if (items.length === 0) {
+  // Sync wishlist from backend for authenticated users
+  useEffect(() => {
+    if (user) {
+      syncFromBackend();
+    }
+  }, [user, syncFromBackend]);
+
+  if (!isLoading && items.length === 0) {
     return (
       <div className="relative min-h-screen pt-40 pb-20 px-4 md:px-8 z-20 flex items-center justify-center">
         <EmptyState
@@ -33,30 +42,41 @@ export default function WishlistPage() {
           transition={{ duration: 0.8 }}
         >
           My Wishlist
+          {items.length > 0 && (
+            <span className="ml-4 text-2xl text-zinc-500 font-light">({items.length})</span>
+          )}
         </motion.h1>
 
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            layout
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-          >
-            {items.map((item, index) => (
-              <ProductCard
-                key={item.productId}
-                id={item.productId}
-                productId={item.productId}
-                slug={item.slug}
-                name={item.name}
-                price={item.price}
-                image={item.image}
-                category="Couture"
-                collection={item.collection}
-                isVault={item.isVault}
-                delay={index * 0.05}
-              />
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-96 rounded-2xl bg-white/5 animate-pulse" />
             ))}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              layout
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              {items.map((item, index) => (
+                <ProductCard
+                  key={item.productId}
+                  id={item.productId}
+                  productId={item.productId}
+                  slug={item.slug}
+                  name={item.name}
+                  price={item.price}
+                  image={item.image}
+                  category="Wishlist"
+                  collection={item.collection}
+                  isVault={item.isVault}
+                  delay={index * 0.1}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
     </div>
   );

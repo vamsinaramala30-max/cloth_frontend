@@ -3,13 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import RobustImage from './RobustImage';
+import ManagedImage from './ManagedImage';
 
 
 
-import { Product } from '@/lib/api';
-import { useCartActions } from '@/hooks/useCartActions';
-import { useWishlist } from '@/hooks/useWishlist';
+import { Product } from '@/types';
+import { useCartStore } from '@/lib/stores/useCartStore';
+import { useWishlistStore } from '@/lib/stores/useWishlistStore';
 import { useAuthStore } from '@/hooks/useAuth';
 
 interface ProductDetailClientProps {
@@ -22,11 +22,11 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
   const [selectedColor, setSelectedColor] = useState(product.variants?.[0]?.colorName ?? 'Classic');
   const [isAdded, setIsAdded] = useState(false);
 
-  const { addToCart } = useCartActions();
+  const { addItem, addItemAndSync } = useCartStore();
 
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { toggleItem, toggleItemWithSync, isInWishlist } = useWishlistStore();
   const { user } = useAuthStore();
-  const isWishlisted = isInWishlist(product._id);
+  const isWishlisted = isInWishlist(product.id);
 
   const images = useMemo(() => {
     const imageList = product.variants?.flatMap((variant) => variant.images || []) ?? [];
@@ -44,20 +44,33 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
   );
 
   const handleAddToCart = async () => {
-    if (!user) {
-      // In a real app, you'd want to show a modal or redirect to login
-      console.log('User not logged in, redirecting to login');
-      window.location.href = '/login';
-      return;
-    }
-
     const variant = product.variants?.find((v) => v.size === selectedSize && v.colorName === selectedColor);
     if (!variant) {
       console.error('Variant not found');
       return;
     }
 
-    const success = await addToCart(product._id, variant.sku, quantity, selectedSize, selectedColor);
+    const localItem = {
+      id: `${product.id}-${selectedSize}-${selectedColor}-${Date.now()}`,
+      productId: product.id,
+      name: product.name,
+      price: product.salePrice ?? product.basePrice ?? 0,
+      image: images[0] || '',
+      size: selectedSize,
+      color: selectedColor,
+      quantity,
+      slug: product.slug,
+      collection: product.collection,
+    };
+
+    let success = false;
+    if (user) {
+      success = await addItemAndSync(product.id, variant.sku, quantity, selectedSize, selectedColor, localItem);
+    } else {
+      addItem(localItem);
+      success = true;
+    }
+
     if (success) {
       setIsAdded(true);
       setTimeout(() => setIsAdded(false), 2000);
@@ -65,21 +78,24 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
   };
 
   const handleWishlist = async () => {
-    if (!user) {
-      // In a real app, you'd want to show a modal or redirect to login
-      console.log('User not logged in, redirecting to login');
-      window.location.href = '/login';
-      return;
-    }
+    const wishlistItem = {
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      price: product.salePrice ?? product.basePrice ?? 0,
+      image: images[0] || '',
+      slug: product.slug,
+      collection: product.collection,
+    };
 
-    if (isWishlisted) {
-      await removeFromWishlist(product._id);
+    if (user) {
+      await toggleItemWithSync(wishlistItem);
     } else {
-      await addToWishlist(product._id);
+      toggleItem(wishlistItem);
     }
   };
 
-  const displayPrice = product.salePrice ?? product.basePrice;
+  const displayPrice = product.salePrice ?? product.basePrice ?? 0;
   const rating = product.averageRating || 0;
   const totalReviews = product.reviews?.length ?? 0;
 
@@ -95,8 +111,8 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
           <Link href="/" className="hover:text-white transition-colors">
             HOME
           </Link>{' '}
-          / <Link href="/shop" className="hover:text-white transition-colors">
-            SHOP
+          / <Link href="/products" className="hover:text-white transition-colors">
+            PRODUCTS
           </Link>{' '}
           / <span className="text-white">{product.name.toUpperCase()}</span>
         </motion.div>
@@ -108,14 +124,13 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
             transition={{ duration: 0.8 }}
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/10 mb-6">
-              <RobustImage
+              <ManagedImage
                 src={images[0]}
                 fallbackSrc={'/images/placeholder.webp'}
                 alt={product.name}
                 fill
                 priority
                 className="object-cover hover:scale-105 transition-transform duration-500"
-                loading="eager"
                 sizes="100vw"
               />
             </div>
@@ -127,7 +142,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
                   className="relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-cyan-400 transition-all"
                   whileHover={{ scale: 1.05 }}
                 >
-                  <RobustImage src={img} alt={`View ${index + 1}`} fill className="object-cover" />
+                  <ManagedImage src={img} alt={`View ${index + 1}`} fill className="object-cover" />
                 </motion.div>
               ))}
             </div>
@@ -259,7 +274,7 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ produc
               </h3>
               <ul className="space-y-2 text-sm text-zinc-300">
                 <li>Category: {product.category}</li>
-                <li>Collections: {product.collections.join(', ') || 'Standard'}</li>
+                <li>Collections: {product.collections?.join(', ') || 'Standard'}</li>
                 <li>Availability: {product.isActive ? 'In Stock' : 'Unavailable'}</li>
               </ul>
             </div>

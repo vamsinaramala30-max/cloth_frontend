@@ -5,10 +5,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 import { useAuthActions } from '@/hooks/useAuthActions';
-import { useAuthStore } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/Logo';
-import DynamicAuthFlow from '@/components/auth/DynamicAuthFlow';
+import { useAuthStore } from '@/hooks';
 
 
 export type AuthMode = 'login' | 'register';
@@ -55,7 +54,7 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
   const router = useRouter();
 
   const { handleLogin, handleRegister, fetchUser } = useAuthActions();
-  const {} = useAuthStore();
+  const { } = useAuthStore();
 
   const [toast, setToast] = useState<Toast>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -128,7 +127,9 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
         }
         setAndAutoClearToast({ kind: 'success', title: 'Welcome back.' });
         await fetchUser();
-        router.replace('/account/orders');
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect') || '/account/orders';
+        router.replace(redirectUrl);
       } finally {
         setSubmitting(false);
       }
@@ -153,7 +154,9 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
       }
       setAndAutoClearToast({ kind: 'success', title: 'Account created.' });
       await fetchUser();
-      router.replace('/account/orders');
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect') || '/account/orders';
+      router.replace(redirectUrl);
     } finally {
       setSubmitting(false);
     }
@@ -185,9 +188,19 @@ export default function LuxuryAuthCard({ mode }: { mode: AuthMode }) {
       <div className="mt-6">
         {showOtpFlow ? (
           <div className="mt-5">
-            {/* Inline OTP/verification UI (fixes missing verification code box) */}
-            {/** Lazy import would be nicer, but keep it simple for now */}
-            <DynamicAuthFlow />
+            {/* Inline OTP verification */}
+            <div className="flex flex-col items-center gap-4 py-4">
+              <p className="text-sm text-zinc-300 text-center">
+                Enter the verification code sent to your email.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="6-digit code"
+                className="w-full max-w-xs text-center text-xl tracking-[0.5em] bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 transition-all"
+              />
+            </div>
 
             <button
               type="button"

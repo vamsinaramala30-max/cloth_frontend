@@ -1,90 +1,180 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, ArrowUpDown, X } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/lib/data/products';
+import { SlidersHorizontal, ArrowUpDown, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { fetchProducts, fetchFilters } from '@/lib/api';
+import { Product } from '@/types';
+import { getLocalProductImage } from '@/lib/images';
 
-type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'popular';
+const sortOptions = [
+  { label: 'Newest', value: 'newest' },
+  { label: 'Price: Low to High', value: 'price-low-high' },
+  { label: 'Price: High to Low', value: 'price-high-low' },
+  { label: 'Popularity', value: 'popularity' },
+  { label: 'Featured', value: 'featured' },
+];
+
+function getProductImage(product: Product, index: number): string {
+  const directImg = product.images?.[0];
+  if (directImg && (directImg.startsWith('http') || directImg.startsWith('/'))) return directImg;
+  const variantImg = product.variants?.[0]?.images?.[0];
+  if (variantImg && (variantImg.startsWith('http') || variantImg.startsWith('/'))) return variantImg;
+  return getLocalProductImage(product.name || product.id, index);
+}
 
 export default function ProductsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedCollection, setSelectedCollection] = useState<string>('All');
-  const [priceRange, setPriceRange] = useState<number>(20000);
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [showFiltersMobile, setShowFiltersMobile] = useState<boolean>(false);
-  const [showVault, setShowVault] = useState<boolean>(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Categories
-  const categories = useMemo(() => {
-    const cats = new Set<string>();
-    cats.add('All');
-    MOCK_PRODUCTS.forEach((p) => {
-      if (p.category) cats.add(p.category);
-    });
-    return Array.from(cats);
-  }, []);
+  // Filter definitions from API
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableCollections, setAvailableCollections] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
 
-  // Collections
-  const collections = useMemo(() => {
-    const cols = new Set<string>();
-    cols.add('All');
-    MOCK_PRODUCTS.forEach((p) => {
-      if (p.collection) cols.add(p.collection);
-      if (Array.isArray(p.collections)) {
-        p.collections.forEach(c => cols.add(c));
+  // Products state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // UI state
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const [searchInputValue, setSearchInputValue] = useState(searchParams?.get('search') || '');
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Read current filters from URL search params
+  const category = searchParams?.get('category') || 'All';
+  const collection = searchParams?.get('collection') || 'All';
+  const color = searchParams?.get('color') || 'All';
+  const size = searchParams?.get('size') || 'All';
+  const minPrice = searchParams?.get('minPrice') || '';
+  const maxPrice = searchParams?.get('maxPrice') || '';
+  const availability = searchParams?.get('availability') || 'All';
+  const featured = searchParams?.get('featured') || '';
+  const newArrivals = searchParams?.get('newArrivals') || '';
+  const bestSellers = searchParams?.get('bestSellers') || '';
+  const sort = searchParams?.get('sort') || 'newest';
+  const search = searchParams?.get('search') || '';
+  const page = parseInt(searchParams?.get('page') || '1', 10);
+
+  // Fetch filter configurations from API
+  useEffect(() => {
+    const loadFilters = async () => {
+      const res = await fetchFilters();
+      if (res.data?.success && res.data?.data) {
+        setAvailableCategories(res.data.data.categories || []);
+        setAvailableCollections(res.data.data.collections || []);
+        setAvailableColors(res.data.data.colors || []);
+        setAvailableSizes(res.data.data.sizes || []);
       }
-    });
-    return Array.from(cols);
+    };
+    loadFilters();
   }, []);
 
-  // Max price
-  const maxPrice = useMemo(() => {
-    return Math.max(...MOCK_PRODUCTS.map((p) => p.price), 1000);
-  }, []);
+  // Fetch filtered products from backend API
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await fetchProducts({
+          category: category !== 'All' ? category : undefined,
+          collection: collection !== 'All' ? collection : undefined,
+          sort,
+          search: search || undefined,
+          page,
+          limit: 12,
+          minPrice: minPrice ? Number(minPrice) : undefined,
+          maxPrice: maxPrice ? Number(maxPrice) : undefined,
+          color: color !== 'All' ? color : undefined,
+          size: size !== 'All' ? size : undefined,
+          availability: availability === 'in-stock' ? 'true' : undefined,
+          featured: featured === 'true' ? true : undefined,
+          newArrivals: newArrivals === 'true' ? true : undefined,
+          bestSellers: bestSellers === 'true' ? true : undefined,
+        });
 
-  // Filtered products
-  const filteredProducts = useMemo(() => {
-    let result = [...MOCK_PRODUCTS];
+        if (response.error) {
+          setError(response.error);
+          setProducts([]);
+        } else if (response.data?.data) {
+          setProducts(response.data.data);
+          setTotalCount(response.data.pagination?.total || 0);
+          setTotalPages(response.data.pagination?.pages || 1);
+        }
+      } catch {
+        setError('Failed to connect to catalog service.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (selectedCategory !== 'All') {
-      result = result.filter((p) => p.category === selectedCategory);
-    }
+    loadProducts();
+  }, [
+    category,
+    collection,
+    color,
+    size,
+    minPrice,
+    maxPrice,
+    availability,
+    featured,
+    newArrivals,
+    bestSellers,
+    sort,
+    search,
+    page,
+  ]);
 
-    if (selectedCollection !== 'All') {
-      result = result.filter(
-        (p) => p.collection === selectedCollection || (Array.isArray(p.collections) && p.collections.includes(selectedCollection))
-      );
-    }
+  // Helper to update query parameters
+  const updateQueryParam = useCallback(
+    (key: string, value: string | undefined) => {
+      const params = new URLSearchParams(window.location.search);
+      if (value === undefined || value === 'All' || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+      // Reset page back to 1 for non-page parameter changes
+      if (key !== 'page') {
+        params.delete('page');
+      }
+      router.push('/products?' + params.toString());
+    },
+    [router]
+  );
 
-    if (showVault) {
-      result = result.filter((p) => p.isVault);
-    }
-
-    result = result.filter((p) => p.price <= priceRange);
-
-    if (sortBy === 'newest') {
-      result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    } else if (sortBy === 'price-asc') {
-      result.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-desc') {
-      result.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'popular') {
-      result.sort((a, b) => (b.reviews && typeof b.reviews === 'number' ? b.reviews : 0) - (a.reviews && typeof a.reviews === 'number' ? a.reviews : 0));
-    }
-
-    return result;
-  }, [selectedCategory, selectedCollection, showVault, priceRange, sortBy]);
-
-  const resetFilters = () => {
-    setSelectedCategory('All');
-    setSelectedCollection('All');
-    setPriceRange(maxPrice);
-    setSortBy('newest');
-    setShowVault(false);
+  // Debounced search input handler
+  const handleSearchInputChange = (val: string) => {
+    setSearchInputValue(val);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      updateQueryParam('search', val.trim() || undefined);
+    }, 400);
   };
+
+  const handleClearSearch = () => {
+    setSearchInputValue('');
+    updateQueryParam('search', undefined);
+  };
+
+  const resetAllFilters = () => {
+    setSearchInputValue('');
+    router.push('/products');
+  };
+
+  // Prepend "All" to filters lists
+  const categoriesList = ['All', ...availableCategories];
+  const collectionsList = ['All', ...availableCollections];
+  const colorsList = ['All', ...availableColors];
+  const sizesList = ['All', ...availableSizes];
 
   return (
     <div className="relative min-h-screen pt-28 pb-24 px-4 md:px-8 z-20 text-white">
@@ -108,49 +198,53 @@ export default function ProductsPage() {
           <div className="mt-8 w-24 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto" />
         </motion.div>
 
+        {/* Global Search Bar */}
+        <div className="max-w-md mx-auto mb-12 relative flex items-center">
+          <Search className="absolute left-4 h-4 w-4 text-zinc-500" />
+          <input
+            type="text"
+            value={searchInputValue}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
+            placeholder="Search products, collections, tags…"
+            className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 pl-11 pr-10 text-sm placeholder-zinc-500 text-white focus:outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all"
+          />
+          {searchInputValue && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-4 p-1 rounded-full text-zinc-400 hover:text-white"
+              aria-label="Clear Search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar Desktop */}
+          {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-28 space-y-8 p-6 rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-md">
+            <div className="sticky top-28 space-y-6 p-6 rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-md">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <h2 className="text-sm font-semibold uppercase tracking-widest flex items-center gap-2">
                   <SlidersHorizontal className="h-4 w-4" /> Filters
                 </h2>
                 <button
-                  onClick={resetFilters}
+                  onClick={resetAllFilters}
                   className="text-[10px] uppercase tracking-widest text-cyan-400 hover:underline"
                 >
                   Reset
                 </button>
               </div>
 
-              {/* Vault Switch */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Vault Pieces Only</span>
-                <button
-                  onClick={() => setShowVault(!showVault)}
-                  className={`w-10 h-6 rounded-full transition-all ${
-                    showVault ? 'bg-amber-400' : 'bg-zinc-800'
-                  } relative flex items-center p-1`}
-                >
-                  <motion.div
-                    layout
-                    className="w-4 h-4 bg-black rounded-full"
-                    animate={{ x: showVault ? 16 : 0 }}
-                  />
-                </button>
-              </div>
-
               {/* Categories */}
               <div>
-                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold">Category</h3>
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Category</h3>
                 <div className="space-y-1">
-                  {categories.map((cat) => (
+                  {categoriesList.map((cat) => (
                     <button
                       key={cat}
-                      onClick={() => setSelectedCategory(cat)}
+                      onClick={() => updateQueryParam('category', cat)}
                       className={`w-full text-left text-xs py-2 px-3 rounded-lg uppercase tracking-wider transition-all border ${
-                        selectedCategory === cat
+                        category === cat
                           ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
                           : 'border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.02]'
                       }`}
@@ -163,14 +257,14 @@ export default function ProductsPage() {
 
               {/* Collections */}
               <div>
-                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold">Collection</h3>
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Collection</h3>
                 <div className="space-y-1">
-                  {collections.map((col) => (
+                  {collectionsList.map((col) => (
                     <button
                       key={col}
-                      onClick={() => setSelectedCollection(col)}
+                      onClick={() => updateQueryParam('collection', col)}
                       className={`w-full text-left text-xs py-2 px-3 rounded-lg uppercase tracking-wider transition-all border ${
-                        selectedCollection === col
+                        collection === col
                           ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
                           : 'border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.02]'
                       }`}
@@ -181,41 +275,126 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {/* Price Filter */}
+              {/* Sizes */}
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Max Price</h3>
-                  <span className="text-xs font-bold text-cyan-400">${priceRange.toLocaleString()}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max={maxPrice}
-                  step="100"
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(Number(e.target.value))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                />
-                <div className="flex justify-between text-[10px] text-zinc-500 mt-2">
-                  <span>$0</span>
-                  <span>${maxPrice.toLocaleString()}</span>
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Size</h3>
+                <div className="flex flex-wrap gap-2">
+                  {sizesList.map((sz) => (
+                    <button
+                      key={sz}
+                      onClick={() => updateQueryParam('size', sz)}
+                      className={`text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all border ${
+                        size === sz
+                          ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
+                          : 'border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      {sz}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Sorting */}
+              {/* Colors */}
               <div>
-                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold flex items-center gap-2">
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Color</h3>
+                <div className="flex flex-wrap gap-2">
+                  {colorsList.map((cl) => (
+                    <button
+                      key={cl}
+                      onClick={() => updateQueryParam('color', cl)}
+                      className={`text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all border ${
+                        color === cl
+                          ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
+                          : 'border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      {cl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Filter Inputs */}
+              <div>
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Price Range</h3>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => updateQueryParam('minPrice', e.target.value || undefined)}
+                    className="w-1/2 bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-cyan-400"
+                  />
+                  <span className="text-zinc-600">-</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => updateQueryParam('maxPrice', e.target.value || undefined)}
+                    className="w-1/2 bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-cyan-400"
+                  />
+                </div>
+              </div>
+
+              {/* Badges / Status Attributes */}
+              <div className="pt-2 border-t border-white/10 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={availability === 'in-stock'}
+                    onChange={(e) => updateQueryParam('availability', e.target.checked ? 'in-stock' : undefined)}
+                    className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                  />
+                  <span>In Stock Only</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={featured === 'true'}
+                    onChange={(e) => updateQueryParam('featured', e.target.checked ? 'true' : undefined)}
+                    className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                  />
+                  <span>Featured Items</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={newArrivals === 'true'}
+                    onChange={(e) => updateQueryParam('newArrivals', e.target.checked ? 'true' : undefined)}
+                    className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                  />
+                  <span>New Arrivals</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={bestSellers === 'true'}
+                    onChange={(e) => updateQueryParam('bestSellers', e.target.checked ? 'true' : undefined)}
+                    className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                  />
+                  <span>Best Sellers</span>
+                </label>
+              </div>
+
+              {/* Sorting */}
+              <div className="pt-2 border-t border-white/10">
+                <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold flex items-center gap-2">
                   <ArrowUpDown className="h-3 w-3" /> Sort By
                 </h3>
                 <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  value={sort}
+                  onChange={(e) => updateQueryParam('sort', e.target.value)}
                   className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white uppercase tracking-widest outline-none focus:border-cyan-400 transition-colors cursor-pointer"
                 >
-                  <option value="newest">Newest</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                  <option value="popular">Popularity</option>
+                  {sortOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value} className="bg-zinc-950">
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -226,7 +405,7 @@ export default function ProductsPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-8">
               <p className="text-xs text-zinc-400 uppercase tracking-widest">
-                Showing {filteredProducts.length} of {MOCK_PRODUCTS.length} pieces
+                Showing {products.length} of {totalCount} pieces
               </p>
 
               {/* Mobile filter button */}
@@ -238,48 +417,72 @@ export default function ProductsPage() {
               </button>
             </div>
 
-            <AnimatePresence mode="popLayout">
-              {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <SkeletonCard key={index} />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-12">{error}</div>
+            ) : products.length > 0 ? (
+              <div className="space-y-12">
                 <motion.div
                   layout
                   className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
                 >
-                  {filteredProducts.map((product, index) => (
+                  {products.map((product, index) => (
                     <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      productId={product.id}
+                      key={product.id || product._id}
+                      id={product.id || product._id || ''}
                       slug={product.slug}
                       name={product.name}
-                      price={product.price}
+                      price={product.salePrice ?? product.basePrice ?? product.price ?? 0}
                       compareAtPrice={product.compareAtPrice}
-                      image={product.images[0]}
-                      hoverImage={product.gallery && product.gallery[1]}
+                      image={getProductImage(product, index)}
                       category={product.category}
-                      collection={product.collection}
+                      collection={product.collection || (product.collections && product.collections[0])}
                       isFeatured={product.isFeatured}
-                      isVault={product.isVault}
                       sizes={product.sizes}
                       delay={index * 0.04}
                     />
                   ))}
                 </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <EmptyState
-                    variant="products"
-                    title="No couture pieces matched"
-                    message="Refine your filter options to discover our other silhouettes."
-                    actionLabel="Reset Catalog"
-                    onAction={resetFilters}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-4 pt-8 border-t border-white/5">
+                    <button
+                      onClick={() => updateQueryParam('page', String(page - 1))}
+                      disabled={page <= 1}
+                      className="p-2 border border-white/10 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/5 transition-all"
+                      aria-label="Previous Page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs uppercase tracking-widest text-zinc-400">
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => updateQueryParam('page', String(page + 1))}
+                      disabled={page >= totalPages}
+                      className="p-2 border border-white/10 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/5 transition-all"
+                      aria-label="Next Page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <EmptyState
+                variant="products"
+                title="No couture pieces matched"
+                message="Refine your filter options to discover our other silhouettes."
+                actionLabel="Reset Catalog"
+                onAction={resetAllFilters}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -314,34 +517,17 @@ export default function ProductsPage() {
                 </button>
               </div>
 
-              <div className="space-y-8 flex-1">
-                {/* Vault Switch */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Vault Only</span>
-                  <button
-                    onClick={() => setShowVault(!showVault)}
-                    className={`w-10 h-6 rounded-full transition-all ${
-                      showVault ? 'bg-amber-400' : 'bg-zinc-800'
-                    } relative flex items-center p-1`}
-                  >
-                    <motion.div
-                      layout
-                      className="w-4 h-4 bg-black rounded-full"
-                      animate={{ x: showVault ? 16 : 0 }}
-                    />
-                  </button>
-                </div>
-
+              <div className="space-y-6 flex-1">
                 {/* Categories */}
                 <div>
-                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold">Category</h3>
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Category</h3>
                   <div className="flex flex-wrap gap-2">
-                    {categories.map((cat) => (
+                    {categoriesList.map((cat) => (
                       <button
                         key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => updateQueryParam('category', cat)}
                         className={`text-xs py-2 px-3 rounded-lg uppercase tracking-wider transition-all border ${
-                          selectedCategory === cat
+                          category === cat
                             ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
                             : 'border-white/10 text-zinc-400 hover:text-white'
                         }`}
@@ -354,14 +540,14 @@ export default function ProductsPage() {
 
                 {/* Collections */}
                 <div>
-                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold">Collection</h3>
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Collection</h3>
                   <div className="flex flex-wrap gap-2">
-                    {collections.map((col) => (
+                    {collectionsList.map((col) => (
                       <button
                         key={col}
-                        onClick={() => setSelectedCollection(col)}
+                        onClick={() => updateQueryParam('collection', col)}
                         className={`text-xs py-2 px-3 rounded-lg uppercase tracking-wider transition-all border ${
-                          selectedCollection === col
+                          collection === col
                             ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
                             : 'border-white/10 text-zinc-400 hover:text-white'
                         }`}
@@ -372,48 +558,133 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                {/* Price Filter */}
+                {/* Sizes */}
                 <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Max Price</h3>
-                    <span className="text-xs font-bold text-cyan-400">${priceRange.toLocaleString()}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxPrice}
-                    step="100"
-                    value={priceRange}
-                    onChange={(e) => setPriceRange(Number(e.target.value))}
-                    className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                  />
-                  <div className="flex justify-between text-[10px] text-zinc-500 mt-2">
-                    <span>$0</span>
-                    <span>${maxPrice.toLocaleString()}</span>
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Size</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {sizesList.map((sz) => (
+                      <button
+                        key={sz}
+                        onClick={() => updateQueryParam('size', sz)}
+                        className={`text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all border ${
+                          size === sz
+                            ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
+                            : 'border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Sorting */}
+                {/* Colors */}
                 <div>
-                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-4 font-semibold flex items-center gap-2">
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Color</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {colorsList.map((cl) => (
+                      <button
+                        key={cl}
+                        onClick={() => updateQueryParam('color', cl)}
+                        className={`text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all border ${
+                          color === cl
+                            ? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300'
+                            : 'border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {cl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Filter Inputs */}
+                <div>
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold">Price Range</h3>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={minPrice}
+                      onChange={(e) => updateQueryParam('minPrice', e.target.value || undefined)}
+                      className="w-1/2 bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-cyan-400"
+                    />
+                    <span className="text-zinc-600">-</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={maxPrice}
+                      onChange={(e) => updateQueryParam('maxPrice', e.target.value || undefined)}
+                      className="w-1/2 bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Badges / Status Attributes */}
+                <div className="pt-2 border-t border-white/10 space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={availability === 'in-stock'}
+                      onChange={(e) => updateQueryParam('availability', e.target.checked ? 'in-stock' : undefined)}
+                      className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>In Stock Only</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={featured === 'true'}
+                      onChange={(e) => updateQueryParam('featured', e.target.checked ? 'true' : undefined)}
+                      className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>Featured Items</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={newArrivals === 'true'}
+                      onChange={(e) => updateQueryParam('newArrivals', e.target.checked ? 'true' : undefined)}
+                      className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>New Arrivals</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-zinc-400 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={bestSellers === 'true'}
+                      onChange={(e) => updateQueryParam('bestSellers', e.target.checked ? 'true' : undefined)}
+                      className="h-4 w-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>Best Sellers</span>
+                  </label>
+                </div>
+
+                {/* Sorting */}
+                <div className="pt-2 border-t border-white/10">
+                  <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 font-semibold flex items-center gap-2">
                     <ArrowUpDown className="h-3 w-3" /> Sort By
                   </h3>
                   <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white uppercase tracking-widest outline-none focus:border-cyan-400 transition-colors"
+                    value={sort}
+                    onChange={(e) => updateQueryParam('sort', e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white uppercase tracking-widest outline-none focus:border-cyan-400 transition-colors cursor-pointer"
                   >
-                    <option value="newest">Newest</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="popular">Popularity</option>
+                    {sortOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-zinc-950">
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="border-t border-white/10 pt-6 mt-6 flex gap-4">
                 <button
-                  onClick={resetFilters}
+                  onClick={resetAllFilters}
                   className="flex-1 py-3 border border-white/10 rounded-xl text-xs uppercase tracking-widest text-zinc-400 hover:text-white transition-all"
                 >
                   Reset

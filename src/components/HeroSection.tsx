@@ -36,7 +36,7 @@ export const HeroSection: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.7, ease: 'easeOut' }}
         >
-          <Link href="/shop" passHref>
+          <Link href="/products" passHref>
             <motion.button
               className="w-full sm:w-auto px-10 py-4 bg-white text-black font-bold tracking-widest uppercase text-sm rounded-full hover:bg-opacity-90 transition-all duration-300"
               whileHover={{ scale: 1.05 }}

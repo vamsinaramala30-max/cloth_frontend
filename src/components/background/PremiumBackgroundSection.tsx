@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import SafeImage from '@/components/SafeImage';
+import ManagedImage from '@/components/ManagedImage';
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -126,7 +126,7 @@ export default function PremiumBackgroundSection({
     >
       {/* Background image layer */}
       <div className="absolute inset-0 z-0">
-        <SafeImage
+        <ManagedImage
           src={backgroundImageSrc}
           alt={backgroundAlt}
           fill

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 
 type Article = {
@@ -69,10 +71,20 @@ function filterArticles(query: string, category: typeof CATEGORIES[number]) {
 }
 
 export function MagazineClient() {
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('All');
 
+  useEffect(() => {
+    if (user) {
+      router.push('/products');
+    }
+  }, [user, router]);
+
   const filtered = useMemo(() => filterArticles(query, category), [query, category]);
+
+  if (user) return null;
 
   return (
     <div className="space-y-10">

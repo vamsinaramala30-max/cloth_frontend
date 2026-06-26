@@ -19,7 +19,7 @@ import {
 
 import { fetchOrderHistory } from '@/lib/api';
 import { useAuthStore } from '@/hooks/useAuth';
-import { OrderHistoryItem, CartItem } from '@/types';
+import { OrderHistoryItem, OrderLineItem } from '@/types';
 import { DashboardLayout } from '@/components/account/DashboardLayout';
 
 const STATUS_STEPS = [
@@ -116,7 +116,7 @@ function OrderCard({
 
     const itemsHtml = items
       .map(
-        (item: CartItem) => `
+        (item: OrderLineItem) => `
         <tr>
           <td style="padding: 12px 10px; border-bottom: 1px solid #27272a;">
             <div style="font-weight: 500; font-size: 13px; color: #ffffff;">${item.name || 'Product'}</div>
@@ -618,10 +618,10 @@ export default function AccountOrdersPage() {
             {filter === 'all' && (
               <div className="pt-2">
                 <Link
-                  href="/shop"
+                  href="/products"
                   className="inline-block bg-gradient-to-r from-cyan-400 to-purple-400 text-black px-6 py-3 text-xs uppercase tracking-widest font-bold rounded-lg hover:shadow-lg transition-all"
                 >
-                  Shop Now
+                  Browse Products
                 </Link>
               </div>
             )}

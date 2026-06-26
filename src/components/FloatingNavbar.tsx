@@ -1,38 +1,89 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/hooks/useAuth';
-import { NAVIGATION } from '@/lib/constants';
 import Logo from './Logo';
-import { ShoppingBag, User, X, Menu, Heart, Search } from 'lucide-react';
+import { ShoppingBag, User, X, Menu, Heart, Search, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/useCartStore';
 import { useWishlistStore } from '@/lib/stores/useWishlistStore';
-import { MOCK_PRODUCTS } from '@/lib/data/products';
-import { COLLECTIONS } from '@/lib/data/collections';
+import { useSearchStore } from '@/lib/stores/useSearchStore';
+import { getLocalProductImage } from '@/lib/images';
 
 export const FloatingNavbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuthStore();
-  const pathname = usePathname();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const { itemCount: cartItemCount, toggleDrawer } = useCartStore();
-  const { itemCount: wishlistItemCount } = useWishlistStore();
+  const { user, initAuth } = useAuthStore();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const navigationItems = useMemo(() => {
+    if (user) {
+      return [
+        { label: 'Collections', href: '/collections' },
+        { label: 'Products', href: '/products' },
+      ];
+    } else {
+      return [
+        { label: 'Collections', href: '/collections' },
+        { label: 'Products', href: '/products' },
+        { label: 'Editorial', href: '/magazine' },
+      ];
+    }
+  }, [user]);
+
+  const { itemCount: cartItemCount, toggleDrawer, syncFromBackend: syncCart } = useCartStore();
+  const { itemCount: wishlistItemCount, syncFromBackend: syncWishlist } = useWishlistStore();
+  const { results, isSearching, search, clearSearch } = useSearchStore();
 
   const cartCount = cartItemCount();
   const wishlistCount = wishlistItemCount();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 80);
+    initAuth();
+  }, [initAuth]);
+
+  useEffect(() => {
+    if (user) {
+      syncCart();
+      syncWishlist();
+    }
+  }, [user, syncCart, syncWishlist]);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Debounced search — calls real backend
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (!value.trim()) {
+        clearSearch();
+        return;
+      }
+      debounceRef.current = setTimeout(() => {
+        search(value);
+      }, 300);
+    },
+    [search, clearSearch]
+  );
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    clearSearch();
+  };
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -42,23 +93,21 @@ export const FloatingNavbar: React.FC = () => {
   const toggleMenu = () => setIsMenuOpen((v) => !v);
   const closeMenu = () => setIsMenuOpen(false);
 
+  const hasResults =
+    results.products.length > 0 || results.collections.length > 0;
+
   return (
     <>
       {/* ── Floating Bar ── */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-[100]"
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: 0, opacity: 1 }}
         animate={{
-          y: isScrolled ? 0 : -100,
-          opacity: isScrolled ? 1 : 0,
+          y: 0,
+          opacity: 1,
         }}
-        transition={{
-          duration: 0.4,
-          ease: 'easeOut',
-        }}
-        style={{
-          pointerEvents: isScrolled ? 'auto' : 'none',
-        }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        style={{ pointerEvents: 'auto' }}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
           <motion.div
@@ -87,13 +136,12 @@ export const FloatingNavbar: React.FC = () => {
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
-              {NAVIGATION.map((item) => (
+              {navigationItems.map((item) => (
                 <Link key={item.href} href={item.href} aria-label={`Navigate to ${item.label}`}>
                   <motion.span
-                    className={`relative text-[11px] font-medium uppercase tracking-widest transition-colors ${isActive(item.href)
-                      ? 'text-white'
-                      : 'text-zinc-400 hover:text-white'
-                      }`}
+                    className={`relative text-[11px] font-medium uppercase tracking-widest transition-colors ${
+                      isActive(item.href) ? 'text-white' : 'text-zinc-400 hover:text-white'
+                    }`}
                     whileHover={{ y: -1 }}
                   >
                     {item.label}
@@ -190,19 +238,30 @@ export const FloatingNavbar: React.FC = () => {
                 className="mt-2 mx-1"
               >
                 <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur-2xl px-4 py-3">
-                  <Search className="h-4 w-4 text-zinc-500 flex-shrink-0" />
+                  {isSearching ? (
+                    <Loader2 className="h-4 w-4 text-zinc-500 flex-shrink-0 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4 text-zinc-500 flex-shrink-0" />
+                  )}
                   <input
                     autoFocus
                     type="search"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products, collections, vault…"
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        closeSearch();
+                        router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+                      }
+                      if (e.key === 'Escape') closeSearch();
+                    }}
+                    placeholder="Search products, collections…"
                     className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
                     aria-label="Search"
                   />
                   {searchQuery && (
                     <button
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => handleSearchChange('')}
                       className="text-zinc-500 hover:text-white"
                       aria-label="Clear search"
                     >
@@ -210,10 +269,7 @@ export const FloatingNavbar: React.FC = () => {
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      setSearchQuery('');
-                    }}
+                    onClick={closeSearch}
                     className="text-zinc-500 hover:text-white text-xs uppercase tracking-widest"
                     aria-label="Close search"
                   >
@@ -221,95 +277,81 @@ export const FloatingNavbar: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Instant Search Results Dropdown */}
-                {searchQuery && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute left-1 right-1 mt-2 bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl z-50 max-h-[70vh] overflow-y-auto"
-                  >
-                    {/* Filter logic */}
-                    {(() => {
-                      const query = searchQuery.toLowerCase();
-                      const matchingProducts = MOCK_PRODUCTS.filter(
-                        (p) =>
-                          p.name.toLowerCase().includes(query) ||
-                          p.category.toLowerCase().includes(query) ||
-                          (p.tags && p.tags.some((t) => t.toLowerCase().includes(query)))
-                      ).slice(0, 5);
-
-                      const matchingCollections = COLLECTIONS.filter(
-                        (c) =>
-                          c.title.toLowerCase().includes(query) ||
-                          c.description.toLowerCase().includes(query)
-                      ).slice(0, 3);
-
-                      if (matchingProducts.length === 0 && matchingCollections.length === 0) {
-                        return (
-                          <div className="py-8 text-center text-zinc-500 text-xs uppercase tracking-widest">
-                            No pieces or collections found
-                          </div>
-                        );
-                      }
-
-                      return (
+                {/* Search Results Dropdown */}
+                <AnimatePresence>
+                  {searchQuery && (hasResults || isSearching) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute left-1 right-1 mt-2 bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl z-50 max-h-[70vh] overflow-y-auto"
+                    >
+                      {isSearching && !hasResults ? (
+                        <div className="py-8 flex items-center justify-center gap-3 text-zinc-500 text-xs uppercase tracking-widest">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Searching…
+                        </div>
+                      ) : !hasResults ? (
+                        <div className="py-8 text-center text-zinc-500 text-xs uppercase tracking-widest">
+                          No results for &quot;{searchQuery}&quot;
+                        </div>
+                      ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Products Column */}
-                          {matchingProducts.length > 0 && (
+                          {results.products.length > 0 && (
                             <div>
                               <h4 className="text-[10px] text-cyan-400 uppercase tracking-[0.2em] font-black mb-3 pb-1.5 border-b border-white/5">
-                                Matching Pieces ({matchingProducts.length})
+                                Pieces ({results.products.length})
                               </h4>
                               <div className="space-y-2">
-                                {matchingProducts.map((p) => (
-                                  <Link
-                                    key={p.id}
-                                    href={p.isVault ? `/vault/${p.slug}` : `/products/${p.slug}`}
-                                    onClick={() => {
-                                      setIsSearchOpen(false);
-                                      setSearchQuery('');
-                                    }}
-                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group"
-                                  >
-                                    <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                                      <Image
-                                        src={p.images[0]}
-                                        alt={p.name}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate">
-                                        {p.name}
-                                      </p>
-                                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">
-                                        {p.category} {p.isVault && '• Vault'}
-                                      </p>
-                                    </div>
-                                    <span className="text-xs font-bold text-white">${p.price.toLocaleString()}</span>
-                                  </Link>
-                                ))}
+                                {results.products.slice(0, 5).map((p) => {
+                                  const img = p.images?.[0] || getLocalProductImage(p.id);
+                                  return (
+                                    <Link
+                                      key={p._id || p.id}
+                                      href={`/products/${p.slug}`}
+                                      onClick={closeSearch}
+                                      className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group"
+                                    >
+                                      <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                                        <Image
+                                          src={img}
+                                          alt={p.name}
+                                          fill
+                                          className="object-cover"
+                                          sizes="48px"
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate">
+                                          {p.name}
+                                        </p>
+                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">
+                                          {p.category}
+                                        </p>
+                                      </div>
+                                      <span className="text-xs font-bold text-white">
+                                        ${(p.salePrice ?? p.basePrice ?? p.price).toLocaleString()}
+                                      </span>
+                                    </Link>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
 
                           {/* Collections Column */}
-                          {matchingCollections.length > 0 && (
+                          {results.collections.length > 0 && (
                             <div>
                               <h4 className="text-[10px] text-purple-400 uppercase tracking-[0.2em] font-black mb-3 pb-1.5 border-b border-white/5">
-                                Collections ({matchingCollections.length})
+                                Collections ({results.collections.length})
                               </h4>
                               <div className="space-y-2">
-                                {matchingCollections.map((c) => (
+                                {results.collections.slice(0, 3).map((c) => (
                                   <Link
                                     key={c.id}
                                     href={`/collections/${c.slug}`}
-                                    onClick={() => {
-                                      setIsSearchOpen(false);
-                                      setSearchQuery('');
-                                    }}
+                                    onClick={closeSearch}
                                     className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-all group border border-white/[0.03]"
                                   >
                                     <div className="relative w-12 h-10 rounded-lg overflow-hidden shrink-0">
@@ -318,6 +360,7 @@ export const FloatingNavbar: React.FC = () => {
                                         alt={c.title}
                                         fill
                                         className="object-cover"
+                                        sizes="48px"
                                       />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -325,7 +368,7 @@ export const FloatingNavbar: React.FC = () => {
                                         {c.title}
                                       </p>
                                       <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-0.5">
-                                        {c.itemCount} pieces
+                                        {c.itemCount ?? c.productCount ?? 0} pieces
                                       </p>
                                     </div>
                                   </Link>
@@ -334,10 +377,10 @@ export const FloatingNavbar: React.FC = () => {
                             </div>
                           )}
                         </div>
-                      );
-                    })()}
-                  </motion.div>
-                )}
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
@@ -383,7 +426,7 @@ export const FloatingNavbar: React.FC = () => {
               {/* Links */}
               <div className="flex-1 px-6 py-8 overflow-y-auto">
                 <div className="flex flex-col gap-1">
-                  {NAVIGATION.map((item, idx) => (
+                  {navigationItems.map((item, idx) => (
                     <motion.div
                       key={item.href}
                       initial={{ opacity: 0, x: 20 }}
@@ -393,10 +436,11 @@ export const FloatingNavbar: React.FC = () => {
                       <Link
                         href={item.href}
                         onClick={closeMenu}
-                        className={`flex items-center py-3.5 px-4 rounded-xl text-sm font-medium uppercase tracking-widest transition-all ${isActive(item.href)
-                          ? 'bg-white/10 text-white'
-                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                          }`}
+                        className={`flex items-center py-3.5 px-4 rounded-xl text-sm font-medium uppercase tracking-widest transition-all ${
+                          isActive(item.href)
+                            ? 'bg-white/10 text-white'
+                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        }`}
                       >
                         {item.label}
                       </Link>

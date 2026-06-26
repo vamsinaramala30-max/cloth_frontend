@@ -1,29 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { getCartLines } from '@/lib/services/cartService';
+import { useCartStore } from '@/lib/stores/useCartStore';
 import { fetchAPI, API_ENDPOINTS } from '@/lib/api';
-
-interface CheckoutItem {
-  id: string;
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  size?: string;
-  color?: string;
-  image?: string;
-}
+import { useAuthStore } from '@/hooks/useAuth';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuthStore();
 
-  const [items, setItems] = useState<CheckoutItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/login?redirect=/checkout');
+    }
+  }, [user, isLoading, router]);
+
+  const { items } = useCartStore();
   const [error, setError] = useState<string | null>(null);
 
   const [customerInfo, setCustomerInfo] = useState({ fullName: '', email: '', phone: '' });
@@ -38,23 +34,6 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'stripe'>('stripe');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        const lines = await getCartLines();
-        if (mounted) setItems(lines);
-      } catch (e) {
-        if (mounted) setError(e instanceof Error ? e.message : 'Failed to load cart');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const subtotal = items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 0), 0);
   const tax = Math.round(subtotal * 0.1);
@@ -120,11 +99,11 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading || !user) {
     return (
       <div className="relative min-h-screen pt-32 md:pt-40 pb-20 px-4 md:px-8 z-20">
         <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-zinc-400">Loading checkout…</motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-zinc-550 tracking-widest text-xs uppercase animate-pulse">Loading checkout...</motion.div>
         </div>
       </div>
     );
@@ -243,9 +222,8 @@ export default function CheckoutPage() {
               <div className="flex gap-3 flex-wrap">
                 <button
                   onClick={() => setPaymentMethod('stripe')}
-                  className={`px-4 py-3 rounded-lg border transition-all ${
-                    paymentMethod === 'stripe' ? 'border-cyan-400 bg-cyan-400/10 text-white' : 'border-white/20 text-zinc-300 hover:border-white/40'
-                  }`}
+                  className={`px-4 py-3 rounded-lg border transition-all ${paymentMethod === 'stripe' ? 'border-cyan-400 bg-cyan-400/10 text-white' : 'border-white/20 text-zinc-300 hover:border-white/40'
+                    }`}
                 >
                   Stripe
                 </button>

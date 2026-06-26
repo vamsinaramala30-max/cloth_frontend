@@ -1,8 +1,22 @@
 import type { Metadata } from 'next';
+import { Inter, Space_Mono } from 'next/font/google';
 import '../app/globals.css';
 import { Footer } from '@/components/Footer';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
+  display: 'swap',
+});
 
 const FloatingNavbar = dynamic(() => import('@/components/FloatingNavbar').then((m) => m.FloatingNavbar), { ssr: false });
 const ParticleBackground = dynamic(() => import('@/components/ParticleBackground').then((m) => m.ParticleBackground), { ssr: false });
@@ -27,17 +41,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceMono.variable}`}>
       <body
-        className="text-luxury-accent overflow-x-hidden relative min-h-screen"
+        className="text-luxury-accent overflow-x-hidden relative min-h-screen font-sans"
         suppressHydrationWarning
       >
         <SmoothScroll />

@@ -18,6 +18,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
+      {
+        protocol: 'https',
+        hostname: 'cloth-backend-xxvt.onrender.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5001',
+      },
     ],
   },
   webpack: (config) => {

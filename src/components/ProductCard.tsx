@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { useWishlistStore } from '@/lib/stores/useWishlistStore';
 import { useCartStore } from '@/lib/stores/useCartStore';
 import { useToastStore } from '@/lib/stores/useToastStore';
-import { getLocalProductImage } from '@/lib/images';
+import { getLocalProductImage, getSafeProductImage } from '@/lib/images';
 
 interface ProductCardProps {
   id: string;
@@ -46,23 +47,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  const router = useRouter();
   const pid = productId || id;
   const productSlug = slug || id;
   const href = `/products/${productSlug}`;
 
-  const { toggleItem, isInWishlist } = useWishlistStore();
+  const { toggleItemWithSync, isInWishlist } = useWishlistStore();
   const { addItem, openDrawer } = useCartStore();
   const { addToast } = useToastStore();
 
   const inWishlist = isInWishlist(pid);
 
-  const safeImage = imgError ? getLocalProductImage(pid) : (image || getLocalProductImage(pid));
-  const safeHoverImage = hoverImage || getLocalProductImage(pid, 1);
+  const safeImage = imgError ? getLocalProductImage(pid) : getSafeProductImage(image, pid);
+  const safeHoverImage = getSafeProductImage(hoverImage, pid, 1);
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleItem({
+    toggleItemWithSync({
       id: pid,
       productId: pid,
       name,
@@ -114,7 +116,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Image Container */}
+        {/* Badges — top left */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+          {isVault && (
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm text-[9px] font-black uppercase tracking-widest text-black">
+              ✦ Vault
+            </span>
+          )}
+          {isFeatured && !isVault && (
+            <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-[9px] font-bold uppercase tracking-widest text-white">
+              Featured
+            </span>
+          )}
+          {discount > 0 && (
+            <span className="px-2.5 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest text-white">
+              −{discount}%
+            </span>
+          )}
+        </div>
+
+        {/* Collection badge — top right */}
+        {collection && (
+          <AnimatePresence>
+            {isHovered && (
+              <motion.div
+                className="absolute top-3 right-10 z-10"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span className="px-2.5 py-1 rounded-full bg-cyan-500/80 backdrop-blur-sm text-[9px] font-semibold uppercase tracking-widest text-white">
+                  {collection.replace(/-/g, ' ')}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+
         <Link href={href}>
           <div className="relative aspect-[3/4] overflow-hidden cursor-pointer">
             {/* Primary Image */}
@@ -153,51 +192,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-            {/* Scale on hover */}
-            <motion.div
-              className="absolute inset-0"
-              animate={{ scale: isHovered ? 1.05 : 1 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-            />
-
-            {/* Badges — top left */}
-            <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-              {isVault && (
-                <span className="px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm text-[9px] font-black uppercase tracking-widest text-black">
-                  ✦ Vault
-                </span>
-              )}
-              {isFeatured && !isVault && (
-                <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-[9px] font-bold uppercase tracking-widest text-white">
-                  Featured
-                </span>
-              )}
-              {discount > 0 && (
-                <span className="px-2.5 py-1 rounded-full bg-red-500/90 backdrop-blur-sm text-[9px] font-bold uppercase tracking-widest text-white">
-                  −{discount}%
-                </span>
-              )}
-            </div>
-
-            {/* Collection badge — top right */}
-            {collection && (
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.div
-                    className="absolute top-3 right-10 z-10"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className="px-2.5 py-1 rounded-full bg-cyan-500/80 backdrop-blur-sm text-[9px] font-semibold uppercase tracking-widest text-white">
-                      {collection.replace(/-/g, ' ')}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            )}
-
             {/* Wishlist Button */}
             <button
               onClick={handleWishlist}
@@ -227,14 +221,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     <ShoppingBag className="h-3 w-3" />
                     Quick Add
                   </button>
-                  <Link href={href}>
-                    <button
-                      className="p-2.5 border border-white/40 bg-black/40 backdrop-blur-sm text-white rounded-xl hover:border-white transition-all"
-                      aria-label={`View ${name}`}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </button>
-                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      router.push(href);
+                    }}
+                    className="p-2.5 border border-white/40 bg-black/40 backdrop-blur-sm text-white rounded-xl hover:border-white transition-all"
+                    aria-label={`View ${name}`}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -243,17 +240,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Info */}
         <div className="p-4">
-          {/* Category */}
           <p className="text-[9px] uppercase tracking-widest text-zinc-500 mb-1">{category}</p>
-
-          {/* Name */}
           <Link href={href}>
             <h3 className="text-sm font-medium text-white leading-tight line-clamp-2 hover:text-cyan-300 transition-colors mb-2">
               {name}
             </h3>
           </Link>
-
-          {/* Price Row */}
           <div className="flex items-center gap-2">
             <span className="text-cyan-400 font-bold text-sm">${price.toLocaleString()}</span>
             {compareAtPrice && compareAtPrice > price && (

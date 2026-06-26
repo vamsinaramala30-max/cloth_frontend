@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import RobustImage from './RobustImage';
+import ManagedImage from './ManagedImage';
 import { IMAGE_MAP } from '../lib/images';
 
 export default function HomeHeroBackground() {
@@ -11,7 +11,7 @@ export default function HomeHeroBackground() {
 
 
       {/* Dynamic, performant hero background (do not change existing background) */}
-      <RobustImage
+      <ManagedImage
         src={IMAGE_MAP.hero}
         alt="Hero background"
         fill
@@ -22,7 +22,7 @@ export default function HomeHeroBackground() {
 
 
       {/* Second background image (additive, keep existing background) */}
-      <RobustImage
+      <ManagedImage
         src={IMAGE_MAP.background}
         alt="Secondary hero background"
         fill

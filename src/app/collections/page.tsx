@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Grid, LayoutList } from 'lucide-react';
-import { COLLECTIONS } from '@/lib/data/collections';
+import { useProductStore } from '@/lib/stores/useProductStore';
+import { IMAGE_MAP } from '@/lib/images';
 
 const container = {
   hidden: { opacity: 0 },
@@ -20,6 +21,15 @@ type ViewMode = 'grid' | 'list';
 
 export default function CollectionsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { collections, isLoadingCollections, collectionsError, fetchCollections } = useProductStore();
+
+  useEffect(() => {
+    if (collections.length === 0 && !isLoadingCollections) {
+      fetchCollections();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const displayCollections = collections.length > 0 ? collections : [];
 
   return (
     <div className="relative min-h-screen pt-28 pb-24 px-4 md:px-8 z-20">
@@ -39,10 +49,17 @@ export default function CollectionsPage() {
             Collections
           </h1>
           <p className="text-sm text-zinc-400 tracking-[0.15em] max-w-lg mx-auto leading-relaxed">
-            Eight curated expressions of futuristic luxury — from AI-generated couture to runway masterworks.
+            Curated expressions of futuristic luxury — from AI-generated couture to runway masterworks.
           </p>
           <div className="mt-8 w-24 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto" />
         </motion.div>
+
+        {/* Error */}
+        {collectionsError && (
+          <div className="mb-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-red-300">
+            {collectionsError}
+          </div>
+        )}
 
         {/* Controls */}
         <motion.div
@@ -52,14 +69,13 @@ export default function CollectionsPage() {
           transition={{ delay: 0.4 }}
         >
           <p className="text-xs text-zinc-500 uppercase tracking-widest">
-            {COLLECTIONS.length} Collections
+            {isLoadingCollections ? 'Loading…' : `${displayCollections.length} Collections`}
           </p>
           <div className="flex items-center gap-2 border border-white/10 rounded-xl p-1">
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'}`}
               aria-label="Grid view"
-              aria-pressed={viewMode === 'grid'}
             >
               <Grid className="h-4 w-4" />
             </button>
@@ -67,115 +83,122 @@ export default function CollectionsPage() {
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'}`}
               aria-label="List view"
-              aria-pressed={viewMode === 'list'}
             >
               <LayoutList className="h-4 w-4" />
             </button>
           </div>
         </motion.div>
 
+        {/* Loading Skeletons */}
+        {isLoadingCollections && (
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className={`animate-pulse rounded-2xl bg-white/5 ${viewMode === 'grid' ? 'h-80' : 'h-28'}`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Grid View */}
-        {viewMode === 'grid' && (
+        {!isLoadingCollections && viewMode === 'grid' && (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
             variants={container}
             initial="hidden"
             animate="show"
           >
-            {COLLECTIONS.map((col) => (
-              <motion.div key={col.id} variants={item}>
-                <Link href={`/collections/${col.slug}`} aria-label={`View ${col.title} collection`}>
-                  <div className="group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-white/20 transition-all duration-500 cursor-pointer">
-                    {/* Image */}
-                    <div className="relative h-64 overflow-hidden">
+            {displayCollections.map((collection) => {
+              const collectionImage = collection.bannerImage || collection.image || IMAGE_MAP.collection;
+              return (
+                <motion.div key={collection.id || collection.slug} variants={item} className="group">
+                  <Link href={`/collections/${collection.slug}`}>
+                    <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-white/[0.08] hover:border-cyan-400/30 transition-all duration-500">
                       <Image
-                        src={col.image}
-                        alt={col.title}
+                        src={collectionImage}
+                        alt={collection.title}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
-                      {/* Gradient */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                      {/* Accent Line */}
-                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${col.accentColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                    </div>
 
-                    {/* Info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] text-zinc-400 uppercase tracking-widest">
-                          {col.itemCount} pieces
-                        </span>
-                        <motion.div
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <ArrowRight className="h-3.5 w-3.5 text-cyan-400" />
-                        </motion.div>
+                      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400 mb-2">
+                          {collection.itemCount ?? collection.productCount ?? 0} pieces
+                        </p>
+                        <h2 className="text-2xl font-light tracking-[0.1em] text-white uppercase mb-2">
+                          {collection.title}
+                        </h2>
+                        <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          {collection.description}
+                        </p>
+                        <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+                          <span className="text-[10px] uppercase tracking-widest text-white">Explore</span>
+                          <ArrowRight className="h-3 w-3 text-cyan-400" />
+                        </div>
                       </div>
-                      <h2 className="text-lg font-light tracking-[0.08em] text-white uppercase group-hover:text-cyan-300 transition-colors">
-                        {col.title}
-                      </h2>
-                      <p className="text-[11px] text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
-                        {col.description}
-                      </p>
                     </div>
-
-                    {/* Hover Glow */}
-                    <div className={`absolute inset-0 bg-gradient-to-t ${col.accentColor} opacity-0 group-hover:opacity-[0.06] transition-opacity duration-500 pointer-events-none`} />
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
 
         {/* List View */}
-        {viewMode === 'list' && (
+        {!isLoadingCollections && viewMode === 'list' && (
           <motion.div
-            className="space-y-4"
+            className="flex flex-col gap-4"
             variants={container}
             initial="hidden"
             animate="show"
           >
-            {COLLECTIONS.map((col, idx) => (
-              <motion.div key={col.id} variants={item}>
-                <Link href={`/collections/${col.slug}`} aria-label={`View ${col.title} collection`}>
-                  <div className="group flex items-center gap-6 p-5 border border-white/[0.08] hover:border-white/20 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 cursor-pointer">
-                    {/* Index */}
-                    <span className="text-2xl font-light text-zinc-700 w-8 flex-shrink-0 text-right">
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-
-                    {/* Image Thumbnail */}
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden">
-                      <Image src={col.image} alt={col.title} fill className="object-cover" sizes="64px" />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h2 className="text-base font-medium tracking-[0.08em] text-white uppercase group-hover:text-cyan-300 transition-colors">
-                          {col.title}
-                        </h2>
-                        <div className={`h-px flex-1 bg-gradient-to-r ${col.accentColor} opacity-20 group-hover:opacity-60 transition-opacity`} />
+            {displayCollections.map((collection) => {
+              const collectionImage = collection.bannerImage || collection.image || IMAGE_MAP.collection;
+              return (
+                <motion.div key={collection.id || collection.slug} variants={item}>
+                  <Link href={`/collections/${collection.slug}`}>
+                    <div className="flex items-center gap-6 p-5 rounded-2xl border border-white/[0.08] hover:border-cyan-400/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-400 group">
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0">
+                        <Image
+                          src={collectionImage}
+                          alt={collection.title}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          sizes="80px"
+                        />
                       </div>
-                      <p className="text-xs text-zinc-500 line-clamp-1">{col.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-cyan-400 mb-1">
+                          {collection.itemCount ?? collection.productCount ?? 0} pieces
+                        </p>
+                        <h2 className="text-lg font-light tracking-[0.08em] text-white uppercase truncate">
+                          {collection.title}
+                        </h2>
+                        <p className="text-xs text-zinc-500 mt-1 line-clamp-1">{collection.description}</p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2 text-zinc-500 group-hover:text-white transition-colors">
+                        <span className="text-[10px] uppercase tracking-widest hidden sm:block">View</span>
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
                     </div>
-
-                    {/* Piece count */}
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-sm font-light text-white">{col.itemCount}</p>
-                      <p className="text-[9px] text-zinc-500 uppercase tracking-widest">pieces</p>
-                    </div>
-
-                    {/* Arrow */}
-                    <ArrowRight className="h-4 w-4 text-zinc-600 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!isLoadingCollections && !collectionsError && displayCollections.length === 0 && (
+          <div className="text-center py-24">
+            <p className="text-zinc-500 text-sm uppercase tracking-widest">No collections found.</p>
+            <Link href="/products" className="mt-6 inline-block text-cyan-400 text-xs uppercase tracking-widest hover:text-cyan-300 transition-colors">
+              Browse Products →
+            </Link>
+          </div>
         )}
       </div>
     </div>

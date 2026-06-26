@@ -54,7 +54,7 @@ function CheckoutConfirmationPageInner() {
                 Track Order
               </button>
 
-              <Link href="/shop">
+              <Link href="/products">
                 <button className="px-6 py-3 border border-white/30 text-white font-bold tracking-widest uppercase rounded-lg hover:border-white/60 transition-all">
                   Continue Shopping
                 </button>

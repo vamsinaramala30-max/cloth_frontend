@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Heart, ShoppingBag, Truck, RotateCcw } from 'lucide-react';
-import { getProductBySlug, getProductsByCollection } from '@/lib/data/products';
+import { fetchProductBySlug, fetchProducts } from '@/lib/api';
 import { useCartStore } from '@/lib/stores/useCartStore';
 import { useWishlistStore } from '@/lib/stores/useWishlistStore';
 import { useToastStore } from '@/lib/stores/useToastStore';
 import { getLocalProductImage } from '@/lib/images';
 import { ProductCard } from '@/components/ProductCard';
+import type { Product } from '@/types';
 
 interface ProductDetailPageProps {
   params: {
@@ -20,64 +20,99 @@ interface ProductDetailPageProps {
 }
 
 export default function ProductSlugDetailPage({ params }: ProductDetailPageProps) {
-  const product = getProductBySlug(params.slug);
-
-  // If not found, show 404
-  if (!product) {
-    notFound();
-  }
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { addItem, openDrawer } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
   const { addToast } = useToastStore();
 
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || 'M');
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || 'Default');
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedColor, setSelectedColor] = useState('Default');
   const quantity = 1;
   const [isZoomed, setIsZoomed] = useState(false);
 
-  const inWishlist = isInWishlist(product.id);
+  useEffect(() => {
+    let active = true;
+    const loadProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetchProductBySlug(params.slug);
+        if (!active) return;
+        if (res.error || !res.data?.data) {
+          setError(res.error || 'Product not found');
+          setProduct(null);
+        } else {
+          const prod = res.data.data;
+          setProduct(prod);
+          setSelectedSize(prod.sizes?.[0] || 'M');
+          setSelectedColor(prod.colors?.[0] || 'Default');
+
+          // Fetch related products
+          const collectionSlug = prod.collection || (prod.collections && prod.collections[0]);
+          if (collectionSlug) {
+            const relRes = await fetchProducts({ collection: collectionSlug });
+            if (active && relRes.data?.data) {
+              setRelatedProducts(relRes.data.data.filter((p) => p.id !== prod.id && (p._id !== prod._id)).slice(0, 4));
+            }
+          }
+        }
+      } catch {
+        if (active) setError('Failed to load product details');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadProduct();
+    return () => {
+      active = false;
+    };
+  }, [params.slug]);
+
+  const inWishlist = product ? isInWishlist(product.id || product._id || '') : false;
 
   const images = useMemo(() => {
+    if (!product) return [];
     if (product.gallery && product.gallery.length > 0) return product.gallery;
     if (product.images && product.images.length > 0) return product.images;
-    return [getLocalProductImage(product.id)];
-  }, [product]);
-
-  const relatedProducts = useMemo(() => {
-    if (!product.collection) return [];
-    return getProductsByCollection(product.collection)
-      .filter((p) => p.id !== product.id)
-      .slice(0, 4);
+    const pid = product.id || product._id || '';
+    return [getLocalProductImage(pid)];
   }, [product]);
 
   const handleAddToBag = () => {
+    if (!product) return;
     addItem({
-      id: `${product.id}-${selectedSize}-${selectedColor}-${Date.now()}`,
-      productId: product.id,
+      id: `${product.id || product._id}-${selectedSize}-${selectedColor}-${Date.now()}`,
+      productId: product.id || product._id || '',
       name: product.name,
       price: product.price,
-      image: images[0],
+      image: images[0] || '',
       size: selectedSize,
       color: selectedColor,
       quantity,
       slug: product.slug,
-      collection: product.collection,
+      collection: product.collection || (product.collections && product.collections[0]) || '',
     });
     openDrawer();
     addToast('success', 'Added to Bag', product.name);
   };
 
   const handleWishlist = () => {
+    if (!product) return;
+    const pid = product.id || product._id || '';
     toggleItem({
-      id: product.id,
-      productId: product.id,
+      id: pid,
+      productId: pid,
       name: product.name,
       price: product.price,
-      image: images[0],
+      image: images[0] || '',
       slug: product.slug,
-      collection: product.collection,
+      collection: product.collection || (product.collections && product.collections[0]) || '',
     });
     addToast(
       inWishlist ? 'info' : 'success',
@@ -86,7 +121,31 @@ export default function ProductSlugDetailPage({ params }: ProductDetailPageProps
     );
   };
 
-  const isSoldOut = (product.inventory || 0) <= 0;
+  const isSoldOut = product ? (product.inventory || 0) <= 0 : true;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-zinc-500 tracking-widest text-xs uppercase animate-pulse">
+          Loading atelier piece...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 text-center px-4">
+        <h2 className="text-xl text-zinc-300 font-light uppercase tracking-widest">Atelier Piece Not Found</h2>
+        <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
+          The requested garment is unavailable or has been archived from the collection.
+        </p>
+        <Link href="/products" className="text-xs text-cyan-400 hover:text-cyan-300 uppercase tracking-widest border-b border-cyan-400/30 pb-1 mt-2">
+          Return to Catalog
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen pt-24 pb-24 px-4 md:px-8 z-20 text-white">
