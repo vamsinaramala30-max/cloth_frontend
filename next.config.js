@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  optimizeFonts: false,
   images: {
     remotePatterns: [
       {
@@ -18,10 +19,21 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
-      {
-        protocol: 'https',
-        hostname: 'cloth-backend-xxvt.onrender.com',
-      },
+      (() => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloth-backend-1gft.onrender.com/api';
+        try {
+          const url = new URL(apiUrl);
+          return {
+            protocol: url.protocol.replace(':', ''),
+            hostname: url.hostname,
+          };
+        } catch (e) {
+          return {
+            protocol: 'https',
+            hostname: 'cloth-backend-1gft.onrender.com',
+          };
+        }
+      })(),
       {
         protocol: 'http',
         hostname: 'localhost',
