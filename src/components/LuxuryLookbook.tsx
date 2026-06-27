@@ -9,14 +9,14 @@ import Link from 'next/link';
 import { useAuthStore } from '@/hooks/useAuth';
 
 export const LuxuryLookbook: React.FC = () => {
-  const { collections, isLoadingCollections, fetchCollections } = useProductStore();
+  const { collections, isLoadingCollections, collectionsError, fetchCollections } = useProductStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (collections.length === 0 && !isLoadingCollections) {
+    if (collections.length === 0 && !isLoadingCollections && !collectionsError) {
       fetchCollections();
     }
-  }, [collections.length, isLoadingCollections, fetchCollections]);
+  }, [collections.length, isLoadingCollections, collectionsError, fetchCollections]);
 
   if (user) return null;
 

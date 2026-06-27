@@ -25,7 +25,7 @@ function getApiUrl(): string {
      window.location.hostname !== '127.0.0.1');
 
   return isProd 
-    ? '' 
+    ? 'https://cloth-backend-1gft.onrender.com/api' 
     : 'http://localhost:5001/api';
 }
 
