@@ -12,6 +12,19 @@ interface FrontendConfig {
 }
 
 function getApiUrl(): string {
+  // Client-side detection of local hostname
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isLocal =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]' ||
+      hostname.startsWith('192.168.');
+    if (isLocal) {
+      return 'http://localhost:5001/api';
+    }
+  }
+
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.trim();
   }
@@ -19,10 +32,7 @@ function getApiUrl(): string {
   // Check if we are in production environment (server or client side)
   const isProd = 
     process.env.NEXT_PUBLIC_NODE_ENV === 'production' || 
-    process.env.NODE_ENV === 'production' || 
-    (typeof window !== 'undefined' && 
-     window.location.hostname !== 'localhost' && 
-     window.location.hostname !== '127.0.0.1');
+    process.env.NODE_ENV === 'production';
 
   return isProd 
     ? 'https://cloth-backend-1gft.onrender.com/api' 
@@ -30,16 +40,17 @@ function getApiUrl(): string {
 }
 
 function getEnvironment(): 'development' | 'production' | 'test' {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isLocal =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]';
+    if (!isLocal) return 'production';
+  }
   if (typeof process === 'undefined') return 'production';
   const env = process.env.NEXT_PUBLIC_NODE_ENV || process.env.NODE_ENV || 'development';
   if (env === 'production' || env === 'test') return env;
-  
-  // If window is defined and we're not on localhost, treat as production
-  if (typeof window !== 'undefined' && 
-      window.location.hostname !== 'localhost' && 
-      window.location.hostname !== '127.0.0.1') {
-    return 'production';
-  }
   
   return 'development';
 }

@@ -1,4 +1,6 @@
 import React from 'react';
+
+export const dynamic = 'force-dynamic';
 import { HeroSection } from '@/components/HeroSection';
 import { FloatingEditorialSection } from '@/components/FloatingEditorialSection';
 import { CampaignVideoSection } from '@/components/CampaignVideoSection';

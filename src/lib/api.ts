@@ -141,6 +141,20 @@ export type SearchResponse = {
 // Re-export User from types for backwards compat
 export type { User } from '@/types';
 
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const authData = localStorage.getItem('plasma-auth');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      return parsed.state?.token || null;
+    }
+  } catch {
+    // Ignore error
+  }
+  return null;
+}
+
 // ── Core Fetch Wrapper ────────────────────────────────────────────────────────
 
 export async function fetchAPI<T>(
@@ -148,12 +162,18 @@ export async function fetchAPI<T>(
   options?: RequestInit
 ): Promise<{ data?: T; error?: string }> {
   try {
+    const token = getStoredToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...((options?.headers || {}) as Record<string, string>),
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
       credentials: 'include',
     });
 
